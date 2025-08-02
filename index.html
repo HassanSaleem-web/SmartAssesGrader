@@ -37,7 +37,7 @@
           <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px">
         </div>
         <div class="nav-actions">
-          <button class="btn-light">Sign In</button>
+          <button class="btn-light">Sign In with Passcode</button>
           <button class="btn-purple">Register</button>
         </div>
       </div>
@@ -63,26 +63,32 @@
           <button class="btn-outline-orange">Upload a file</button>
         </div>
         <textarea placeholder="Enter submission here"></textarea>
+        <p class="info-text" style="font-size: 14px; margin-top: 10px;">
+          🧠 Feedback will be evaluated using <strong>all rubric criteria</strong> at the <strong>Distinguished</strong> level.
+        </p>
         <div id="pdf-link" style="margin-top: 16px;"></div>
         <div id="loader" class="loader"></div>
       </div>
       <div class="grading-options">
         <label class="form-label">Customize your grading:</label>
-        <label class="form-label">Select the grade level, rubric, and grading intensity for the assignment.</label>
+        <label class="form-label">Select the grade level and grading intensity for the assignment.</label>
         <div class="grading-card">
           <div class="grade-levels">
             <span>Grade level</span>
             <div class="grade-buttons">
-              <button class="btn-toggle selected">Elementary</button>
-              <button class="btn-toggle">Middle School</button>
-              <button class="btn-toggle">High School</button>
-              <button class="btn-toggle">College</button>
+              <button class="btn-toggle selected">1st</button>
+              <button class="btn-toggle">2nd</button>
+              <button class="btn-toggle">3rd</button>
+              <button class="btn-toggle">4th</button>
+              <button class="btn-toggle">5th</button>
+              <button class="btn-toggle">6th</button>
+              <button class="btn-toggle">7th</button>
+              <button class="btn-toggle">8th</button>
+              <button class="btn-toggle">9th</button>
+              <button class="btn-toggle">10th</button>
+              <button class="btn-toggle">11th</button>
+              <button class="btn-toggle">12th</button>
             </div>
-          </div>
-
-          <div class="rubric-select">
-            <label>Rubric</label>
-            <select class="rubric-dropdown"></select>
           </div>
 
           <div class="grading-intensity">
@@ -102,26 +108,6 @@
   </section>
 
   <script>
-    const rubricData = {
-      "Criterion 1: Centering instruction on high expectations for student achievement.": {},
-      "Criterion 2: Demonstrating effective teaching practices.": {},
-      "Criterion 3: Recognizing individual student learning needs and developing strategies to": {},
-      "Criterion 4: Providing clear and intentional focus on subject matter content and": {},
-      "Criterion 5: Fostering and managing a safe, positive learning environment.": {},
-      "Criterion 6: Using multiple student data elements to modify instruction and improve": {},
-      "Criterion 7: Communicating and collaborating with parents and the school community.": {},
-      "Criterion 8: Exhibiting collaborative and collegial practices focused on improving": {}
-    };
-
-    const select = document.querySelector('.rubric-dropdown');
-    select.innerHTML = '<option disabled selected>Select a rubric criterion</option>';
-    for (const criterion in rubricData) {
-      const option = document.createElement('option');
-      option.value = criterion;
-      option.textContent = criterion;
-      select.appendChild(option);
-    }
-
     function setupToggleButtonGroup(containerSelector) {
       const container = document.querySelector(containerSelector);
       if (!container) return;
@@ -142,13 +128,11 @@
       e.preventDefault();
       const gradeLevel = document.querySelector('.grade-levels .btn-toggle.selected')?.textContent;
       const intensity = document.querySelector('.grading-intensity .btn-toggle.selected')?.textContent;
-      const rubric = document.querySelector('.rubric-dropdown')?.value;
       const submissionText = document.querySelector('textarea')?.value;
 
       const payload = {
         gradeLevel,
         intensity,
-        rubric,
         submission: submissionText
       };
 
