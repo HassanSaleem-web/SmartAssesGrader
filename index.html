@@ -37,8 +37,10 @@
           <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px">
         </div>
         <div class="nav-actions">
-          <button class="btn-light">Sign In with Passcode</button>
-          <button class="btn-purple">Register</button>
+          <div id="user-greeting-wrapper"></div>
+
+          <div id="auth-action-wrapper"></div>
+
         </div>
       </div>
     </header>
@@ -136,9 +138,6 @@
         submission: submissionText
       };
 
-      console.log('%cPayload being sent to backend:', 'color: orange; font-weight: bold;');
-      console.log(payload);
-
       const linkContainer = document.getElementById('pdf-link');
       const loader = document.getElementById('loader');
 
@@ -154,9 +153,6 @@
 
         const data = await response.json();
         loader.style.display = 'none';
-
-        console.log('%cBackend response:', 'color: green; font-weight: bold;');
-        console.log(data);
 
         if (data.success && data.pdfUrl) {
           const pdfLink = document.createElement('a');
@@ -174,12 +170,61 @@
         }
       } catch (error) {
         loader.style.display = 'none';
-        console.error('%cError sending data to backend:', 'color: red; font-weight: bold;');
-        console.error(error);
         linkContainer.textContent = 'Error connecting to backend.';
         linkContainer.style.color = 'red';
       }
     });
   </script>
+
+  <!-- ✅ Minimalist query param name injection -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1));
+      const name = hashParams.get("name");
+      const email = hashParams.get("email");
+  
+      console.log("🌐 window.location.href:", window.location.href);
+      console.log("🔍 Hash Params:", window.location.hash);
+      console.log("📩 Decoded name:", name);
+      console.log("📩 Decoded email:", email);
+  
+      const greetingWrapper = document.getElementById("user-greeting-wrapper");
+      const authWrapper = document.getElementById("auth-action-wrapper");
+  
+      // Render Greeting or Sign In button
+      if (name && greetingWrapper) {
+        const decodedName = decodeURIComponent(name);
+        greetingWrapper.innerHTML = `
+          <div style="
+padding: 4px 12px;
+  font-size: 13px;
+  color: #6246ea;
+  background: #f3f0ff;
+  font-weight: 500;
+  border-radius: 6px;
+  line-height: 1.2;
+  display: inline-block;
+          ">
+            Welcome, ${decodedName}
+          </div>`;
+      } else {
+        greetingWrapper.innerHTML = `<button class="btn-light" onclick="window.location.href='http://localhost:3000/signin'">Sign In with Passcode</button>`;
+      }
+  
+      // Render Register or Sign Out button
+      if (name && authWrapper) {
+        authWrapper.innerHTML = `<button class="btn-purple" onclick="signOut()">Sign Out</button>`;
+      } else {
+        authWrapper.innerHTML = `<button class="btn-purple" onclick="window.location.href='http://localhost:3000/signup'">Register</button>`;
+      }
+    });
+  
+    function signOut() {
+      // 👋 Remove hash and reload
+      window.location.hash = "";
+      window.location.reload();
+    }
+  </script>
+  
 </body>
 </html>

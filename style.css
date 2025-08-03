@@ -42,8 +42,8 @@ body {
 .navbar {
   position: sticky;
   top: 0;
-  width: 80%;
-  height: 70px;
+  width: 60%;
+  height: 60px;
   background: white;
   border-radius: 10px;
   padding: 0 24px;
@@ -59,7 +59,7 @@ body {
 }
 
 .logo-img {
-  height: 40px;
+  height: 70px;
   width: auto;
   display: block;
   object-fit: contain;
@@ -305,4 +305,21 @@ select {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
-  
+  .nav-actions .btn-light,
+.nav-actions .btn-purple {
+  padding: 4px 12px !important;
+  font-size: 13px !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+  border-radius: 6px;
+}
+.nav-actions .greeting-text {
+  padding: 4px 12px;
+  font-size: 13px;
+  color: #6246ea;
+  background: #f3f0ff;
+  font-weight: 500;
+  border-radius: 6px;
+  line-height: 1.2;
+  display: inline-block;
+}
