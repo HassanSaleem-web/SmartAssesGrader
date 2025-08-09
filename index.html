@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Assess – AI Grader UI</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <style>
     .loader {
@@ -22,25 +22,74 @@
       margin-right: auto;
       display: none;
     }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .file-meta { font-size: 13px; color: #475569; margin-top: 8px; }
+    .file-chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 4px 10px; border-radius: 999px; background: #f3f4f6;
+      color: #111827; font-size: 12px; font-weight: 500;
     }
+    .file-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+    .error-text { color: #dc2626; font-size: 14px; margin-top: 8px; }
   </style>
+
+  <!-- ✅ Mammoth for DOCX -->
+  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
+
+  <!-- ✅ Resilient PDF.js loader + fallback CDNs -->
+  <script>
+    async function loadScript(src) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src;
+        s.async = true;
+        s.onload = () => resolve();
+        s.onerror = () => reject(new Error('Failed to load ' + src));
+        document.head.appendChild(s);
+      });
+    }
+
+    // Tries unpkg first, then jsDelivr. Sets the matching worker on success.
+    async function ensurePdfJsLoaded() {
+      if (window.pdfjsLib?.GlobalWorkerOptions) return; // already loaded
+
+      const cdns = [
+        {
+          lib:    'https://unpkg.com/pdfjs-dist@4.8.69/legacy/build/pdf.min.js',
+          worker: 'https://unpkg.com/pdfjs-dist@4.8.69/legacy/build/pdf.worker.min.js'
+        },
+        {
+          lib:    'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/legacy/build/pdf.min.js',
+          worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/legacy/build/pdf.worker.min.js'
+        }
+      ];
+
+      let lastErr;
+      for (const { lib, worker } of cdns) {
+        try {
+          await loadScript(lib);
+          if (!window.pdfjsLib?.GlobalWorkerOptions) throw new Error('pdfjsLib not on window');
+          pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
+          return;
+        } catch (e) {
+          lastErr = e; // try next CDN
+        }
+      }
+      throw lastErr || new Error('PDF.js could not be loaded from any CDN');
+    }
+  </script>
 </head>
 <body>
   <div class="navbar-wrapper">
     <header class="navbar">
       <div class="navbar-content">
         <div class="logo-container">
-          <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px">
+          <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
         </div>
         <div class="nav-actions">
           <div id="user-greeting-wrapper"></div>
-
           <div id="auth-action-wrapper"></div>
-
         </div>
       </div>
     </header>
@@ -61,16 +110,26 @@
       <div class="submission">
         <label class="form-label">Student submission</label>
         <div class="submission-buttons">
-          <button class="btn-outline-orange">Insert sample essay</button>
-          <button class="btn-outline-orange">Upload a file</button>
+          <button id="btn-sample" class="btn-outline-orange" type="button">Insert sample essay</button>
+          <button id="btn-upload" class="btn-outline-orange" type="button">Upload a file</button>
+          <!-- Hidden file input -->
+          <input id="file-input" type="file"
+                 accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                 style="display:none" />
         </div>
-        <textarea placeholder="Enter submission here"></textarea>
+
+        <textarea id="submission-textarea" placeholder="Enter submission here"></textarea>
+
+        <div class="file-meta" id="file-meta"></div>
+        <div id="parse-error" class="error-text" style="display:none;"></div>
+
         <p class="info-text" style="font-size: 14px; margin-top: 10px;">
           🧠 Feedback will be evaluated using <strong>all rubric criteria</strong> at the <strong>Distinguished</strong> level.
         </p>
         <div id="pdf-link" style="margin-top: 16px;"></div>
         <div id="loader" class="loader"></div>
       </div>
+
       <div class="grading-options">
         <label class="form-label">Customize your grading:</label>
         <label class="form-label">Select the grade level and grading intensity for the assignment.</label>
@@ -110,40 +169,150 @@
   </section>
 
   <script>
+    // ---------- UI Helpers ----------
     function setupToggleButtonGroup(containerSelector) {
       const container = document.querySelector(containerSelector);
       if (!container) return;
-      container.addEventListener('click', function (e) {
+      container.addEventListener('click', (e) => {
         if (e.target.classList.contains('btn-toggle')) {
-          const buttons = container.querySelectorAll('.btn-toggle');
-          buttons.forEach(btn => btn.classList.remove('selected'));
+          container.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('selected'));
           e.target.classList.add('selected');
         }
       });
     }
-
     setupToggleButtonGroup('.grade-levels .grade-buttons');
     setupToggleButtonGroup('.grading-intensity .grade-buttons');
 
+    // ---------- Elements ----------
     const gradeBtn = document.querySelector('.grade-btn');
+    const textarea = document.getElementById('submission-textarea');
+    const loader = document.getElementById('loader');
+    const linkContainer = document.getElementById('pdf-link');
+    const parseError = document.getElementById('parse-error');
+    const fileMeta = document.getElementById('file-meta');
+    const fileInput = document.getElementById('file-input');
+    const btnUpload = document.getElementById('btn-upload');
+    const btnSample = document.getElementById('btn-sample');
+
+    // Sample filler
+    btnSample.addEventListener('click', () => {
+      textarea.value =
+`Climate change is accelerating due to human activities such as burning fossil fuels and deforestation. In this essay, I will argue that schools should adopt energy-saving practices and teach students how to reduce waste. First, conserving electricity by turning off lights...`;
+    });
+
+    // ---------- File Upload & Parsing ----------
+    btnUpload.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async () => {
+      parseError.style.display = 'none';
+      parseError.textContent = '';
+      linkContainer.innerHTML = '';
+      fileMeta.innerHTML = '';
+
+      const file = fileInput.files?.[0];
+      if (!file) return;
+
+      const maxSizeBytes = 20 * 1024 * 1024; // 20MB safety cap
+      if (file.size > maxSizeBytes) {
+        parseError.textContent = 'File is too large (max 20MB).';
+        parseError.style.display = 'block';
+        fileInput.value = '';
+        return;
+      }
+
+      const isPDF = /pdf$/i.test(file.type) || /\.pdf$/i.test(file.name);
+      const isDocx = /officedocument\.wordprocessingml\.document$/i.test(file.type) || /\.docx$/i.test(file.name);
+
+      if (!isPDF && !isDocx) {
+        parseError.textContent = 'Unsupported file type. Please upload a PDF or DOCX.';
+        parseError.style.display = 'block';
+        fileInput.value = '';
+        return;
+      }
+
+      loader.style.display = 'block';
+      textarea.value = ''; // clear before injecting
+      try {
+        let extractedText = '';
+        if (isPDF) {
+          extractedText = await parsePDF(file);
+        } else if (isDocx) {
+          extractedText = await parseDOCX(file);
+        }
+
+        if (!extractedText || !extractedText.trim()) {
+          throw new Error('No extractable text found in the document.');
+        }
+
+        textarea.value = extractedText.trim();
+
+        // Show file chip
+        const kb = Math.max(1, Math.round(file.size / 1024));
+        fileMeta.innerHTML = `
+          <span class="file-chip" title="${escapeHtml(file.name)}">
+            <span class="dot"></span>
+            <span>${escapeHtml(file.name)} • ${kb} KB</span>
+          </span>
+        `;
+      } catch (err) {
+        console.error('Parse error:', err);
+        parseError.textContent = 'Could not parse the file. Please ensure it is a text-based PDF or a valid DOCX.';
+        parseError.style.display = 'block';
+      } finally {
+        loader.style.display = 'none';
+      }
+    });
+
+    // ---- PDF Parsing with PDF.js (lazy load + CDN fallback) ----
+    async function parsePDF(file) {
+      // Make sure the library + worker are available
+      if (!window.pdfjsLib?.GlobalWorkerOptions) {
+        await ensurePdfJsLoaded();
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      let fullText = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        const strings = content.items
+          .map(item => ('str' in item ? item.str : ''))
+          .filter(Boolean);
+        fullText += strings.join(' ') + '\n\n';
+      }
+      return normalizeWhitespace(fullText);
+    }
+
+    // ---- DOCX Parsing with Mammoth ----
+    async function parseDOCX(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await window.mammoth.extractRawText({ arrayBuffer });
+      return normalizeWhitespace(result.value || '');
+    }
+
+    // ---------- Grading Request ----------
     gradeBtn.addEventListener('click', async (e) => {
       e.preventDefault();
+
       const gradeLevel = document.querySelector('.grade-levels .btn-toggle.selected')?.textContent;
       const intensity = document.querySelector('.grading-intensity .btn-toggle.selected')?.textContent;
-      const submissionText = document.querySelector('textarea')?.value;
+      const submissionText = textarea?.value?.trim();
 
-      const payload = {
-        gradeLevel,
-        intensity,
-        submission: submissionText
-      };
-
-      const linkContainer = document.getElementById('pdf-link');
-      const loader = document.getElementById('loader');
+      const payload = { gradeLevel, intensity, submission: submissionText };
 
       linkContainer.innerHTML = '';
-      loader.style.display = 'block';
+      parseError.style.display = 'none';
 
+      if (!submissionText) {
+        parseError.textContent = 'Please enter text or upload a file before grading.';
+        parseError.style.display = 'block';
+        return;
+      }
+
+      loader.style.display = 'block';
       try {
         const response = await fetch('https://smartassessbackend.onrender.com/grade', {
           method: 'POST',
@@ -169,11 +338,30 @@
           linkContainer.style.color = 'red';
         }
       } catch (error) {
+        console.error(error);
         loader.style.display = 'none';
         linkContainer.textContent = 'Error connecting to backend.';
         linkContainer.style.color = 'red';
       }
     });
+
+    // ---------- Utilities ----------
+    function normalizeWhitespace(text) {
+      return text
+        .replace(/\r\n/g, '\n')
+        .replace(/\t/g, ' ')
+        .replace(/[ \u00A0]{2,}/g, ' ')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+    }
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
   </script>
 
   <!-- ✅ Minimalist query param name injection -->
@@ -182,49 +370,44 @@
       const hashParams = new URLSearchParams(window.location.hash.slice(1));
       const name = hashParams.get("name");
       const email = hashParams.get("email");
-  
+
       console.log("🌐 window.location.href:", window.location.href);
       console.log("🔍 Hash Params:", window.location.hash);
       console.log("📩 Decoded name:", name);
       console.log("📩 Decoded email:", email);
-  
+
       const greetingWrapper = document.getElementById("user-greeting-wrapper");
       const authWrapper = document.getElementById("auth-action-wrapper");
-  
-      // Render Greeting or Sign In button
+
       if (name && greetingWrapper) {
         const decodedName = decodeURIComponent(name);
         greetingWrapper.innerHTML = `
           <div style="
-padding: 4px 12px;
-  font-size: 13px;
-  color: #6246ea;
-  background: #f3f0ff;
-  font-weight: 500;
-  border-radius: 6px;
-  line-height: 1.2;
-  display: inline-block;
-          ">
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #6246ea;
+            background: #f3f0ff;
+            font-weight: 500;
+            border-radius: 6px;
+            line-height: 1.2;
+            display: inline-block;">
             Welcome, ${decodedName}
           </div>`;
       } else {
         greetingWrapper.innerHTML = `<button class="btn-light" onclick="window.location.href='https://smartassessgrader.onrender.com/signin'">Sign In with Passcode</button>`;
       }
-  
-      // Render Register or Sign Out button
+
       if (name && authWrapper) {
         authWrapper.innerHTML = `<button class="btn-purple" onclick="signOut()">Sign Out</button>`;
       } else {
         authWrapper.innerHTML = `<button class="btn-purple" onclick="window.location.href='https://smartassessgrader.onrender.com/signup'">Register</button>`;
       }
     });
-  
+
     function signOut() {
-      // 👋 Remove hash and reload
       window.location.hash = "";
       window.location.reload();
     }
   </script>
-  
 </body>
 </html>
