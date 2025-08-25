@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Assess – Lesson Plan Generator</title>
+  <link rel="stylesheet" href="lessonplan.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+    <div class="navbar-wrapper">
+  <header class="navbar">
+    <div class="navbar-content">
+      <div class="logo-container">
+        <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
+      </div>
+      <div class="nav-actions">
+        <button onclick="window.location.href='index.html'" class="btn-light">← Back to Grader</button>
+      </div>
+    </div>
+  </header>
+</div>
+  <main class="hero-container">
+    <section class="hero-content">
+      <h1 class="hero-title">Lesson Plan Generator</h1>
+      <p class="hero-subtitle">Quickly generate standards-aligned lesson plans with AI assistance.</p>
+    </section>
+  </main>
+
+  <section class="grading-form">
+    <div class="form-card">
+      <form id="lesson-form">
+        <div class="form-grid">
+          <!-- LEFT: Inputs -->
+          <div class="form-left">
+            <div class="form-section">
+              <label class="form-label" for="class">Class Subject</label>
+              <input type="text" id="class" placeholder="e.g. History, ELA, Science" />
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="grade">Grade Level</label>
+              <select id="grade">
+                <option value="">Select grade...</option>
+                <script>
+                  document.write([...Array(12)].map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''));
+                </script>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="unit">Unit Title</label>
+              <input type="text" id="unit" />
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="theme">Unit Theme</label>
+              <input type="text" id="theme" />
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="objective">Learning Objective</label>
+              <textarea id="objective" rows="2"></textarea>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="target">Learning Target</label>
+              <textarea id="target" rows="2"></textarea>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="criteria">Student Success Criteria</label>
+              <textarea id="criteria" rows="2"></textarea>
+            </div>
+          </div>
+
+          <!-- RIGHT: Checkboxes -->
+          <div class="form-right">
+            <div class="form-section">
+              <label class="form-label">Include Elements:</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="generateLessonPlan" /> 1-page Lesson Plan</label>
+                <label><input type="checkbox" name="generateNotes" /> 1-page Notes</label>
+                <label><input type="checkbox" name="boardReady" /> Board-ready Targets</label>
+                <label><input type="checkbox" name="includePreAssessment" /> Pre-Assessment</label>
+                <label><input type="checkbox" name="includeFormative" /> Formative Assessment</label>
+                <label><input type="checkbox" name="includePostAssessment" /> Post-Assessment</label>
+                <label><input type="checkbox" name="includeSelfAssessment" /> Self-Assessment</label>
+                <label><input type="checkbox" name="includeVocabulary" /> Vocabulary</label>
+                <label><input type="checkbox" name="differentiate" /> Differentiate for ELL/Level</label>
+                <label><input type="checkbox" name="multipleLessons" /> Generate Multiple Lessons</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer: Submit -->
+        <div class="form-section text-center">
+          <button type="submit" class="btn-purple">Generate Lesson Plan</button>
+          <div id="loader" class="loader" style="margin-top: 12px;"></div>
+          <div id="lesson-output" style="margin-top: 16px;"></div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <script>
+    const form = document.getElementById('lesson-form');
+    const loader = document.getElementById('loader');
+    const output = document.getElementById('lesson-output');
+  
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      output.innerHTML = '';
+      loader.style.display = 'block';
+  
+      // Build payload manually for full control
+      const payload = {
+        class: document.getElementById('class')?.value?.trim() || '',
+        grade: document.getElementById('grade')?.value || '',
+        unit: document.getElementById('unit')?.value?.trim() || '',
+        theme: document.getElementById('theme')?.value?.trim() || '',
+        objective: document.getElementById('objective')?.value?.trim() || '',
+        target: document.getElementById('target')?.value?.trim() || '',
+        criteria: document.getElementById('criteria')?.value?.trim() || '',
+  
+        // Checkbox options
+        generateLessonPlan: form.querySelector('input[name="generateLessonPlan"]')?.checked || false,
+        generateNotes: form.querySelector('input[name="generateNotes"]')?.checked || false,
+        boardReady: form.querySelector('input[name="boardReady"]')?.checked || false,
+        includePreAssessment: form.querySelector('input[name="includePreAssessment"]')?.checked || false,
+        includeFormative: form.querySelector('input[name="includeFormative"]')?.checked || false,
+        includePostAssessment: form.querySelector('input[name="includePostAssessment"]')?.checked || false,
+        includeSelfAssessment: form.querySelector('input[name="includeSelfAssessment"]')?.checked || false,
+        includeVocabulary: form.querySelector('input[name="includeVocabulary"]')?.checked || false,
+        differentiate: form.querySelector('input[name="differentiate"]')?.checked || false,
+        multipleLessons: form.querySelector('input[name="multipleLessons"]')?.checked || false,
+      };
+  
+      // 🔍 Log exactly what's being sent
+      console.log("📤 Payload to backend:");
+      console.table(payload);
+  
+      try {
+        const res = await fetch('https://smartassessbackend.onrender.com/lessonplan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+  
+        const data = await res.json();
+  
+        // ✅ Log the response
+        console.log("✅ Response from backend:");
+        console.log(data);
+  
+        loader.style.display = 'none';
+  
+        if (data.success && data.pdfUrl) {
+          const link = document.createElement('a');
+          link.href = `https://smartassessbackend.onrender.com${data.pdfUrl}`;
+          link.textContent = '📄 Download Lesson Plan PDF';
+          link.target = '_blank';
+          link.className = 'btn-light';
+          output.appendChild(link);
+        } else {
+          output.textContent = '❌ Generation failed. Please try again.';
+        }
+      } catch (err) {
+        console.error('❌ Request error:', err);
+        loader.style.display = 'none';
+        output.textContent = '❌ Error connecting to backend.';
+      }
+    });
+  </script>
+    </body>
+</html>

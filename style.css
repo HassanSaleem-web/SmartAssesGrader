@@ -323,3 +323,44 @@ select {
   line-height: 1.2;
   display: inline-block;
 }
+.switch-link {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  background-color: white;
+  color: #6246ea;
+  font-size: 13px;
+  padding: 6px 16px;
+  border: 1px solid #6246ea;
+  border-radius: 999px;
+  font-weight: 500;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.2s ease-in-out;
+}
+
+.switch-link:hover {
+  background-color: #f3f0ff;
+  color: #4026c4;
+  border-color: #4026c4;
+}
+.submission {
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.form-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+textarea,
+input,
+select {
+  font-family: 'Inter', sans-serif;
+}
