@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Assess – Assignment Generator</title>
+  <link rel="stylesheet" href="lessonplan.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="navbar-wrapper">
+    <header class="navbar">
+      <div class="navbar-content">
+        <div class="logo-container">
+          <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
+        </div>
+        <div class="nav-actions">
+          <button onclick="window.location.href='index.html'" class="btn-light">← Back to Grader</button>
+        </div>
+      </div>
+    </header>
+  </div>
+
+  <main class="hero-container">
+    <section class="hero-content">
+      <h1 class="hero-title">Assignment Generator</h1>
+      <p class="hero-subtitle">Design assignments aligned to your unit, grade level, and objectives.</p>
+    </section>
+  </main>
+
+  <section class="grading-form">
+    <div class="form-card">
+      <form id="assignment-form">
+        <div class="form-grid">
+          <div class="form-left">
+            <div class="form-section">
+              <label class="form-label" for="subject">Subject</label>
+              <input type="text" id="subject" placeholder="e.g. History, Science, ELA" />
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="grade">Grade Level</label>
+              <select id="grade">
+                <option value="">Select grade...</option>
+                <script>
+                  document.write([...Array(12)].map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''));
+                </script>
+              </select>
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="unit">Unit Title</label>
+              <input type="text" id="unit" placeholder="e.g. Civil Rights Movement" />
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="topic">Assignment Topic</label>
+              <input type="text" id="topic" placeholder="e.g. Causes of WWII" />
+            </div>
+
+            <div class="form-section">
+              <label class="form-label" for="objectives">Learning Objectives</label>
+              <textarea id="objectives" rows="2" placeholder="What should students learn?"></textarea>
+            </div>
+          </div>
+
+          <div class="form-right">
+            <div class="form-section">
+              <label class="form-label">Assignment Features</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="includeRubric" /> Include Rubric</label>
+                <label><input type="checkbox" name="includeInstructions" /> Student Instructions</label>
+                <label><input type="checkbox" name="includeScaffoldedSupport" /> Scaffolded Support</label>
+                <label><input type="checkbox" name="requireResearch" /> Research Required</label>
+                <label><input type="checkbox" name="includeReflection" /> Student Reflection</label>
+                <label><input type="checkbox" name="multipleVersions" /> Multiple Versions</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section text-center">
+          <button type="submit" class="btn-purple">Generate Assignment</button>
+          <div id="loader" class="loader" style="margin-top: 12px;"></div>
+          <div id="assignment-output" style="margin-top: 16px;"></div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <script src="assignmentgenerator.js"></script>
+</body>
+</html>

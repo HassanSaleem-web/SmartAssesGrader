@@ -253,10 +253,14 @@ select {
   line-height: 24px;
 }
 .grade-action {
-    width: 100%;
-    margin: 20px 0 0 0 ;
-  }
-  
+  width: 100%;
+  margin: 20px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
   #pdf-link {
     margin-top: 16px;
     display: block; /* Ensure it's block-level and visible */
@@ -323,27 +327,43 @@ select {
   line-height: 1.2;
   display: inline-block;
 }
-.switch-link {
+.switch-links {
+  position: relative;
+  width: 75%;
+  margin: 0 auto;
+  height: 0; /* no vertical space */
+}
+
+.switch-links .switch-link {
   position: absolute;
-  top: -44px;
-  right: 0;
-  background-color: white;
-  color: #6246ea;
+  top: -46px;
   font-size: 13px;
   padding: 6px 16px;
   border: 1px solid #6246ea;
   border-radius: 999px;
   font-weight: 500;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   transition: all 0.2s ease-in-out;
+  background-color: white;
+  color: #6246ea;
 }
 
-.switch-link:hover {
+.switch-links .switch-link:first-child {
+  right: 270px; /* pushes the first button to the left */
+}
+
+.switch-links .switch-link:last-child {
+  right: 0; /* stays on far right */
+}
+
+.switch-links .switch-link:hover {
   background-color: #f3f0ff;
   color: #4026c4;
   border-color: #4026c4;
 }
+
+
 .submission {
   background: white;
   padding: 28px;
