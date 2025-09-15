@@ -90,6 +90,64 @@
     </div>
   </section>
 
-  <script src="assignmentgenerator.js"></script>
+  <script>
+    document.getElementById('assignment-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const subject = document.getElementById('subject').value.trim();
+      const grade = document.getElementById('grade').value;
+      const unit = document.getElementById('unit').value.trim();
+      const topic = document.getElementById('topic').value.trim();
+      const objectives = document.getElementById('objectives').value.trim();
+
+      const form = e.target;
+      const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+      const options = {};
+      checkboxes.forEach(cb => options[cb.name] = cb.checked);
+
+      const loader = document.getElementById('loader');
+      const output = document.getElementById('assignment-output');
+      output.innerHTML = '';
+      loader.style.display = 'block';
+
+      try {
+        const response = await fetch('https://smartassessbackend.onrender.com/assignment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject,
+            grade,
+            unit,
+            topic,
+            objectives,
+            ...options
+          })
+        });
+
+        const data = await response.json();
+        loader.style.display = 'none';
+
+        if (data.success && data.pdfUrl) {
+          const link = document.createElement('a');
+          link.href = `https://smartassessbackend.onrender.com${data.pdfUrl}`;
+          link.target = '_blank';
+          link.textContent = '📄 Download Assignment PDF';
+          link.style.display = 'inline-block';
+          link.style.fontWeight = '500';
+          link.style.color = '#6246ea';
+          link.style.textDecoration = 'none';
+          output.appendChild(link);
+        } else {
+          output.textContent = '❌ Something went wrong. Please try again.';
+          output.style.color = 'red';
+        }
+      } catch (err) {
+        loader.style.display = 'none';
+        output.textContent = '⚠️ Error connecting to the server.';
+        output.style.color = 'red';
+        console.error(err);
+      }
+    });
+  </script>
 </body>
 </html>
