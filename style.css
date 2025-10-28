@@ -190,6 +190,7 @@ textarea {
 .submission-buttons {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 12px;
 }
 
@@ -383,4 +384,270 @@ textarea,
 input,
 select {
   font-family: 'Inter', sans-serif;
+}
+.toggle-handwritten {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-handwritten input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #cbd5e1;
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-handwritten input[type="checkbox"]:checked {
+  background-color: #6246ea;
+  border-color: #6246ea;
+}
+
+.toggle-handwritten input[type="checkbox"]::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 6px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  opacity: 0;
+  transform: rotate(45deg);
+  transition: all 0.2s ease;
+}
+
+.toggle-handwritten input[type="checkbox"]:checked::after {
+  opacity: 1;
+}
+
+.grading-options, #submission-textarea {
+  transition: opacity 0.3s ease;
+}
+.batch-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.batch-header,
+.batch-row {
+  display: grid;
+  grid-template-columns: 
+    50px   /* Preview */
+    110px   /* File Name */
+    110px   /* Grade Level */
+    110px   /* Intensity */
+    110px;   /* Action */
+    
+  align-items: center;
+  padding: 6px 12px;
+  gap: 10px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+/* Header */
+.batch-header {
+  background: #f9fafb;
+  font-weight: 600;
+  font-size: 12px;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Row */
+.batch-row {
+  background: #fff;
+  font-size: 12px;
+  height: 52px;
+  border-bottom: 1px solid #f1f1f1;
+  transition: background 0.2s ease;
+}
+
+.batch-row:hover {
+  background: #f9f9ff;
+}
+
+/* Image preview */
+.preview-cell img {
+  width: 50px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+
+/* File name text */
+.file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+/* Dropdowns and buttons */
+.batch-row select,
+.batch-row button {
+  height: 28px;
+  font-size: 12px;
+  border-radius: 5px;
+  border: 1px solid #d1d5db;
+}
+
+.batch-row select {
+  padding: 2px 4px;
+  background: white;
+}
+
+.batch-row button {
+  padding: 0 8px;
+  background: #6246ea;
+  color: white;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.batch-row button:hover {
+  background: #4e37d5;
+}
+
+
+/* Add-row footer */
+.add-row {
+  text-align: center;
+  padding: 10px;
+  background: #f3f4f6;
+  cursor: pointer;
+  color: #4b5563;
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.add-row:hover {
+  background: #e5e7eb;
+}
+
+/* Scroll area */
+#batch-grid-section {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c5c6ca #f8f8ff;
+}
+
+#batch-grid-section::-webkit-scrollbar {
+  height: 6px;
+}
+#batch-grid-section::-webkit-scrollbar-thumb {
+  background-color: #c5c6ca;
+  border-radius: 4px;
+}
+#batch-grid-section::-webkit-scrollbar-track {
+  background: #f8f8ff;
+}
+/* === Correct Layout: Card on Left, List on Right === */
+
+/* Flex container layout */
+.grading-form .form-container {
+  display: flex;
+  flex-direction: row; /* normal order — card left, list right */
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+/* Adjust proportions */
+.submission {
+  flex: 0.8;
+  min-width: 340px;
+}
+
+#batch-grid-section {
+  flex: 1.2;
+  min-width: 550px;
+  margin-top: 0;
+}
+
+/* Align batch grid vertically with the card */
+#batch-grid-section h2,
+#batch-grid-section p {
+  margin-left: 0;
+}
+
+/* Optional: match heights visually */
+.submission, #batch-grid-section {
+  align-self: stretch;
+}
+
+/* Responsive stacking */
+@media (max-width: 900px) {
+  .grading-form .form-container {
+    flex-direction: column;
+    gap: 30px;
+  }
+}
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280; /* neutral gray */
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.delete-btn:hover {
+  color: #ef4444; /* soft red hover */
+  transform: scale(1.2);
+}
+.download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f3f0ff;
+  border: 1px solid #d1c4ff;
+  border-radius: 6px;
+  color: #6246ea;
+  font-weight: 500;
+  font-size: 13px;
+  padding: 6px 10px;
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
+}
+
+.download-btn:hover {
+  background-color: #6246ea;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(98, 70, 234, 0.25);
 }
