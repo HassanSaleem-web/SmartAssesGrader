@@ -629,13 +629,13 @@ batchGrid.addEventListener("click", (e) => {
             Welcome, ${decodedName}
           </div>`;
       } else {
-        greetingWrapper.innerHTML = `<button class="btn-light" onclick="window.location.href=' http://localhost:3000/signin'">Sign In with Passcode</button>`;
+        greetingWrapper.innerHTML = `<button class="btn-light" onclick="window.location.href=' https://smartassessgrader.onrender.com/signin'">Sign In with Passcode</button>`;
       }
 
       if (name && authWrapper) {
         authWrapper.innerHTML = `<button class="btn-purple" onclick="signOut()">Sign Out</button>`;
       } else {
-        authWrapper.innerHTML = `<button class="btn-purple" onclick="window.location.href=' http://localhost:3000/signup'">Register</button>`;
+        authWrapper.innerHTML = `<button class="btn-purple" onclick="window.location.href=' https://smartassessgrader.onrender.com/signup'">Register</button>`;
       }
     });
 
