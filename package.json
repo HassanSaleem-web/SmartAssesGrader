@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build:env": "node frontend/generate-config.mjs",
+    "start": "npm run build:env && npx serve frontend -s"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3"
+  }
+}
