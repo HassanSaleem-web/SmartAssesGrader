@@ -149,5 +149,43 @@
       }
     });
   </script>
+  <script>
+    (function propagateHash() {
+      const currentHash = window.location.hash;           // e.g. "#name=Huda&email=..."
+      if (!currentHash) return;
+  
+      // 1) Rewrite all same-origin links to carry the current hash
+      document.querySelectorAll('a[href]').forEach(a => {
+        const href = a.getAttribute('href');
+        if (!href) return;
+        // Skip absolute external links, mailto, tel, and pure hash anchors
+        if (/^(https?:|mailto:|tel:)/i.test(href) || href.startsWith('#')) return;
+  
+        // If link already has a hash, append as &…; else add the current hash
+        const newHref = href.includes('#')
+          ? href + '&' + currentHash.slice(1)
+          : href + currentHash;
+        a.setAttribute('href', newHref);
+      });
+  
+      // 2) Patch inline button navigations like: onclick="window.location.href='page.html'"
+      document.querySelectorAll('[onclick*="window.location.href"]').forEach(el => {
+        const m = el.getAttribute('onclick').match(/window\.location\.href\s*=\s*'([^']+)'/);
+        if (!m) return;
+        const url = m[1];
+        const newUrl = url.includes('#')
+          ? url + '&' + currentHash.slice(1)
+          : url + currentHash;
+        el.setAttribute('onclick', `window.location.href='${newUrl}'`);
+      });
+  
+      // 3) Optional helper for future use: <button onclick="navWithHash('lessonplan.html')">
+      window.navWithHash = function (url) {
+        const h = window.location.hash;
+        window.location.href = url + (url.includes('#') ? '&' + h.slice(1) : h);
+      };
+    })();
+  </script>
+  
 </body>
 </html>
