@@ -432,7 +432,7 @@ async function processNextInQueue() {
     formData.append("gradeLevel", gradeLevel);
     formData.append("intensity", intensity);
 
-    const response = await fetch("https://smartassessbackend.onrender.com/grade", {
+    const response = await fetch("https://smartassessbackend-99pu.onrender.com/grade", {
       method: "POST",
       body: formData,
     });
@@ -440,7 +440,7 @@ async function processNextInQueue() {
 
     if (data.success && data.pdfUrl) {
       const link = document.createElement("a");
-      link.href = `http://https://smartassessbackend.onrender.com${data.pdfUrl}`;
+      link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
       link.target = "_blank";
       link.className = "download-btn";
       link.innerHTML = `
@@ -529,7 +529,7 @@ batchGrid.addEventListener("click", (e) => {
   
           console.log('🚀 Sending file to backend:', uploadedFile.name);
   
-          response = await fetch('https://smartassessbackend.onrender.com/grade', {
+          response = await fetch('https://smartassessbackend-99pu.onrender.com/grade', {
             method: 'POST',
             body: formData
           });
@@ -546,10 +546,11 @@ batchGrid.addEventListener("click", (e) => {
           const payload = { gradeLevel, intensity, submission: submissionText };
           console.log('🚀 Sending JSON payload:', payload);
   
-          response = await fetch('https://smartassessbackend.onrender.com/grade', {
+          response = await fetch('https://smartassessbackend-99pu.onrender.com/grade', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
+
           });
         }
   
@@ -558,7 +559,7 @@ batchGrid.addEventListener("click", (e) => {
   
         if (data.success && data.pdfUrl) {
   const link = document.createElement("a");
-  link.href = `https://smartassessbackend.onrender.com${data.pdfUrl}`;
+  link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
   link.target = "_blank";
   link.className = "download-btn";
   link.innerHTML = `
