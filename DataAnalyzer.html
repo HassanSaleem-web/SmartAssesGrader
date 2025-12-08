@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="DataAnalyzer.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SmartAssess – Data Analyzer</title>
+  <link rel="icon" href="logo.svg" type="image/svg+xml" />
 </head>
 
 <body>
@@ -533,7 +534,7 @@
   const dropdown = document.getElementById("assessment-classroom");
   const token = localStorage.getItem("jwt");
  
-console.log("teachername:", teacherName);
+
   const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
     headers: { "Authorization": `Bearer ${token}` }
   });
