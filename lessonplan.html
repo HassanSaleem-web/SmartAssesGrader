@@ -17,7 +17,7 @@
         <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
       </div>
       <div class="nav-actions">
-        <button onclick="window.location.href='index.html'" class="btn-light">← Back to Grader</button>
+        <button onclick="window.location.href='home.html'" class="btn-light">← Back to Grader</button>
       </div>
     </div>
   </header>
@@ -144,7 +144,7 @@
       console.table(payload);
   
       try {
-        const res = await fetch('https://smartassessbackend.onrender.com/lessonplan', {
+        const res = await fetch('https://smartassessbackend-99pu.onrender.com/lessonplan', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -160,7 +160,7 @@
   
         if (data.success && data.pdfUrl) {
           const link = document.createElement('a');
-          link.href = `https://smartassessbackend.onrender.com${data.pdfUrl}`;
+          link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
           link.textContent = '📄 Download Lesson Plan PDF';
           link.target = '_blank';
           link.className = 'btn-light';

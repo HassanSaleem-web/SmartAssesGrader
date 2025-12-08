@@ -2,687 +2,207 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Assess – AI Grader UI</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
-
-  <style>
-    .loader {
-      border: 6px solid #f3f3f3;
-      border-top: 6px solid #6246ea;
-      border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      animation: spin 1s linear infinite;
-      margin-top: 20px;
-      margin-left: auto;
-      margin-right: auto;
-      display: none;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    .file-meta { font-size: 13px; color: #475569; margin-top: 8px; }
-    .file-chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 4px 10px; border-radius: 999px; background: #f3f4f6;
-      color: #111827; font-size: 12px; font-weight: 500;
-    }
-    .file-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
-    .error-text { color: #dc2626; font-size: 14px; margin-top: 8px; }
-  </style>
-
-  <!-- ✅ Mammoth for DOCX -->
-  <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
-
-  <!-- ✅ Resilient PDF.js loader + fallback CDNs -->
-  <script>
-    async function loadScript(src) {
-      return new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = src;
-        s.async = true;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error('Failed to load ' + src));
-        document.head.appendChild(s);
-      });
-    }
-
-    // Tries unpkg first, then jsDelivr. Sets the matching worker on success.
-    async function ensurePdfJsLoaded() {
-      if (window.pdfjsLib?.GlobalWorkerOptions) return; // already loaded
-
-      const cdns = [
-        {
-          lib:    'https://unpkg.com/pdfjs-dist@4.8.69/legacy/build/pdf.min.js',
-          worker: 'https://unpkg.com/pdfjs-dist@4.8.69/legacy/build/pdf.worker.min.js'
-        },
-        {
-          lib:    'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/legacy/build/pdf.min.js',
-          worker: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.8.69/legacy/build/pdf.worker.min.js'
-        }
-      ];
-
-      let lastErr;
-      for (const { lib, worker } of cdns) {
-        try {
-          await loadScript(lib);
-          if (!window.pdfjsLib?.GlobalWorkerOptions) throw new Error('pdfjsLib not on window');
-          pdfjsLib.GlobalWorkerOptions.workerSrc = worker;
-          return;
-        } catch (e) {
-          lastErr = e; // try next CDN
-        }
-      }
-      throw lastErr || new Error('PDF.js could not be loaded from any CDN');
-    }
-  </script>
+  <title>SmartAssess – Login / Sign Up</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Use the same CSS file you already have for the grader/analyzer -->
+  <link rel="stylesheet" href="Auth.css" />
 </head>
 <body>
-  <div class="navbar-wrapper">
-    <header class="navbar">
-      <div class="navbar-content">
-        <div class="logo-container">
-          <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
-        </div>
-        <div class="nav-actions">
-          <div id="user-greeting-wrapper"></div>
-          <div id="auth-action-wrapper"></div>
-        </div>
-      </div>
-    </header>
-  </div>
 
-  <main class="hero-container">
-    <section class="hero-content">
-      <h1 class="hero-title">Smart Assess</h1>
-      <p class="hero-subtitle">
-        Built for real classrooms—create, differentiate, and grade in minutes with zero setup.
-      </p>
-    </section>
+  <!-- ============== NAVBAR ============== -->
+ 
+
+  <!-- ============== HERO ============== -->
+  <section class="hero-container">
     <div class="hero-bg"></div>
-  </main>
-  <div class="switch-links">
-    <a href="lessonplan.html" class="switch-link">🔁 Switch to Lesson Plan Generator</a>
-    <a href="AssignmentGenerator.html" class="switch-link">📝 Switch to Assignment Generator</a>
-  </div>
-  <section class="grading-form">
-    <div class="form-container">
-      <div class="submission">
-        <label class="form-label">Student submission</label>
-        <div class="submission-buttons">
-          <button id="btn-sample" class="btn-outline-orange" type="button">Insert sample essay</button>
-          <button id="btn-upload" class="btn-outline-orange" type="button">Upload a file</button>
-          <button id="btn-upload-batch" class="btn-outline-orange" type="button">Upload Batch Files</button>
 
-          <!-- Handwritten toggle -->
-
-          <!-- Hidden file input -->
-          <input id="file-input" type="file"
-  accept=".pdf,.docx,.jpg,.jpeg,.png,.webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*"
-  style="display:none" />
-  <input id="batch-file-input" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf"
-       multiple style="display:none" />
-
-
-        </div>
-
-        <textarea id="submission-textarea" placeholder="Enter submission here"></textarea>
-
-        <div class="file-meta" id="file-meta"></div>
-        <div id="parse-error" class="error-text" style="display:none;"></div>
-
-        <p class="info-text" style="font-size: 14px; margin-top: 10px;">
-          🧠 Feedback will be evaluated using <strong>all rubric criteria</strong> at the <strong>Distinguished</strong> level.
-        </p>
-        <div id="pdf-link" style="margin-top: 16px;"></div>
-        <div id="loader" class="loader"></div>
-      </div>
-<!-- Batch Upload Grid -->
-<section id="batch-grid-section" style="display:none; margin-top: 40px;">
-  <h2 style="font-size: 1.25rem; color:#1e293b; font-weight:600;">Batch Submissions</h2>
-  <p style="font-size: 14px; color:#475569;">Each submission below can be graded individually.</p>
-
-  <div id="batch-grid" class="batch-grid"></div>
-</section>
-
-      <div class="grading-options">
-        <label class="form-label">Customize your grading:</label>
-        <label class="form-label">Select the grade level and grading intensity for the assignment.</label>
-        <div class="grading-card">
-          <div class="grade-levels">
-            <span>Grade level</span>
-            <div class="grade-buttons">
-              <button class="btn-toggle selected">1st</button>
-              <button class="btn-toggle">2nd</button>
-              <button class="btn-toggle">3rd</button>
-              <button class="btn-toggle">4th</button>
-              <button class="btn-toggle">5th</button>
-              <button class="btn-toggle">6th</button>
-              <button class="btn-toggle">7th</button>
-              <button class="btn-toggle">8th</button>
-              <button class="btn-toggle">9th</button>
-              <button class="btn-toggle">10th</button>
-              <button class="btn-toggle">11th</button>
-              <button class="btn-toggle">12th</button>
-            </div>
-          </div>
-
-          <div class="grading-intensity">
-            <span>Grading intensity</span>
-            <div class="grade-buttons">
-              <button class="btn-toggle selected">Easy</button>
-              <button class="btn-toggle">Normal</button>
-              <button class="btn-toggle">Strict</button>
-            </div>
-          </div>
-        </div>
-        <div class="grade-action">
-          <button class="btn-purple grade-btn">Grade now</button>
-        </div>
-        
-        
-              </div>
+    <div class="hero-content">
+      <h1 class="hero-title">Welcome to SmartAssess</h1>
+      <p class="hero-subtitle">
+        Sign in or create an account to generate AI-powered assignments, analyze
+        student progress, and align with Washington State standards.
+      </p>
     </div>
   </section>
 
-  <script>
-    // ---------- UI Helpers ----------
-    function setupToggleButtonGroup(containerSelector) {
-      const container = document.querySelector(containerSelector);
-      if (!container) return;
-      container.addEventListener('click', (e) => {
-        if (e.target.classList.contains('btn-toggle')) {
-          container.querySelectorAll('.btn-toggle').forEach(btn => btn.classList.remove('selected'));
-          e.target.classList.add('selected');
-        }
-      });
-    }
-    setupToggleButtonGroup('.grade-levels .grade-buttons');
-    setupToggleButtonGroup('.grading-intensity .grade-buttons');
-  
-    // ---------- Elements ----------
-    const gradeBtn     = document.querySelector('.grade-btn');
-    const textarea     = document.getElementById('submission-textarea');
-    const loader       = document.getElementById('loader');
-    const linkContainer= document.getElementById('pdf-link');
-    const parseError   = document.getElementById('parse-error');
-    const fileMeta     = document.getElementById('file-meta');
-    const fileInput    = document.getElementById('file-input');
-    const btnUpload    = document.getElementById('btn-upload');
-    const btnSample    = document.getElementById('btn-sample');
-   
-  
-    // Store uploaded file
-    let uploadedFile = null;
-  
-    // Sample filler
-    btnSample.addEventListener('click', () => {
-      textarea.value =
-  `Climate change is accelerating due to human activities such as burning fossil fuels and deforestation. In this essay, I will argue that schools should adopt energy-saving practices and teach students how to reduce waste. First, conserving electricity by turning off lights...`;
-    });
-  
-    // ---------- File Upload ----------
-    btnUpload.addEventListener('click', () => fileInput.click());
-  
-    fileInput.addEventListener('change', () => {
-      parseError.style.display = 'none';
-      parseError.textContent = '';
-      linkContainer.innerHTML = '';
-      fileMeta.innerHTML = '';
-  
-      const file = fileInput.files?.[0];
-      if (!file) return;
-  
-      uploadedFile = file; // save for grading
-  
-      // Show chip with filename
-      const kb = Math.max(1, Math.round(file.size / 1024));
-      let previewHtml = `
-        <span class="file-chip" title="${escapeHtml(file.name)}">
-          <span class="dot"></span>
-          <span>${escapeHtml(file.name)} • ${kb} KB</span>
-        </span>
-      `;
-  
-      // If it's an image, add preview
-      if (/image\/(png|jpe?g|gif|webp)$/i.test(file.type)) {
-        const imgUrl = URL.createObjectURL(file);
-        previewHtml += `
-          <div style="margin-top: 10px;">
-            <img src="${imgUrl}" alt="Preview"
-                 style="max-width: 200px; max-height: 150px; border: 1px solid #ddd; border-radius: 6px;" />
+  <!-- ============== AUTH CARD ============== -->
+  <section class="grading-form">
+    <div class="form-container" style="max-width: 640px; margin: 0 auto; flex-direction: column;">
+
+      <!-- Auth Switch Tabs -->
+      <div class="switch-links" style="justify-content: center; margin-bottom: 10px;">
+        <button class="switch-link auth-tab active" data-target="login-form">
+          Login
+        </button>
+        <button class="switch-link auth-tab" data-target="signup-form">
+          Sign Up
+        </button>
+      </div>
+
+      <!-- LOGIN FORM -->
+      <div id="login-form" class="auth-form active-auth">
+        <h2 class="form-label" style="margin-bottom: 16px;">Log in to your account</h2>
+      
+        <div class="submission">
+          <label class="form-label" for="login-email">Email</label>
+          <input id="login-email" type="email" class="modal-input" placeholder="your@email.com" required />
+      
+          <label class="form-label" for="login-password" style="margin-top: 14px;">Password</label>
+          <input id="login-password" type="password" class="modal-input" placeholder="Enter your password" required />
+      
+          <p id="login-message" class="info-text" style="margin-top: 10px;"></p>
+      
+          <div style="display:flex; justify-content:flex-end; margin-top: 16px;">
+            <button id="login-btn" class="btn-purple">Log In</button>
           </div>
-        `;
-      } else {
-        // For non-images just show filename
-        previewHtml += `
-          <div style="margin-top: 10px; font-size: 13px; color: #374151;">
-            File ready to upload: ${escapeHtml(file.name)}
+        </div>
+      </div>
+      
+      <!-- SIGNUP FORM -->
+      <div id="signup-form" class="auth-form" style="display:none;">
+        <h2 class="form-label" style="margin-bottom: 16px;">Create a new account</h2>
+      
+        <div class="submission">
+          <label class="form-label">Full Name</label>
+          <input id="signup-name" class="modal-input" placeholder="Your name" required />
+      
+
+          <label class="form-label" style="margin-top:14px;">Email</label>
+          <input id="signup-email" type="email" class="modal-input" placeholder="your@email.com" required />
+      
+          <label class="form-label" style="margin-top:14px;">Password</label>
+          <input id="signup-password" type="password" class="modal-input" placeholder="Enter password" required />
+      
+          <p id="signup-message" class="info-text" style="margin-top: 10px;"></p>
+      
+          <div style="display:flex; justify-content:flex-end; margin-top: 16px;">
+            <button id="signup-btn" class="btn-purple">Sign Up</button>
           </div>
-        `;
-      }
-  
-      fileMeta.innerHTML = previewHtml;
-    });
-  // ---------- Batch Upload Mode ----------
-// ---------- Batch Upload Mode ----------
-const btnBatchUpload = document.getElementById("btn-upload-batch");
-const batchFileInput = document.getElementById("batch-file-input");
-const batchGridSection = document.getElementById("batch-grid-section");
-const batchGrid = document.getElementById("batch-grid");
-const gradingOptions = document.querySelector(".grading-options");
-const submissionTextArea = document.getElementById("submission-textarea");
-
-// 🔹 Create "Exit Batch Mode" button dynamically
-const btnExitBatch = document.createElement("button");
-btnExitBatch.textContent = "Exit Batch Mode";
-btnExitBatch.className = "btn-outline-orange";
-btnExitBatch.style.display = "none";
-btnExitBatch.style.marginTop = "16px";
-document.querySelector(".submission-buttons").appendChild(btnExitBatch);
-
-// 🔹 Handle batch upload button
-btnBatchUpload.addEventListener("click", () => {
-  batchFileInput.click();
-});
-
-// 🔹 Keep a persistent list of uploaded files
-let allBatchFiles = [];
-
-// 🔹 When files selected
-// 🔹 Utility functions to toggle button visibility
-function hideNonBatchButtons() {
-  const submissionButtons = document.querySelectorAll(".submission-buttons button");
-  submissionButtons.forEach(btn => {
-    if (btn !== btnExitBatch) btn.style.display = "none";
-  });
-}
-
-function showAllButtons() {
-  const submissionButtons = document.querySelectorAll(".submission-buttons button");
-  submissionButtons.forEach(btn => (btn.style.display = "inline-block"));
-  btnExitBatch.style.display = "none";
-}
-
-// 🔹 When files selected
-batchFileInput.addEventListener("change", () => {
-  const newFiles = Array.from(batchFileInput.files);
-  if (!newFiles.length) return;
-
-  // Hide normal grading UI
-  gradingOptions.style.display = "none";
-  submissionTextArea.style.display = "none";
-
-  // Show batch UI
-  batchGridSection.style.display = "block";
-  btnExitBatch.style.display = "inline-block";
-
-  // ✅ Hide other buttons now
-  hideNonBatchButtons();
-
-  // Append to existing list instead of replacing
-  allBatchFiles = [...allBatchFiles, ...newFiles];
-  batchFileInput.value = ""; // allow re-selecting same files
-  renderBatchGrid();
-});
-
-// 🔹 Exit Batch Mode
-btnExitBatch.addEventListener("click", () => {
-  // Restore UI
-  batchGridSection.style.display = "none";
-  gradingOptions.style.display = "block";
-  submissionTextArea.style.display = "block";
-
-  // ✅ Restore all buttons
-  showAllButtons();
-
-  // Clear list
-  allBatchFiles = [];
-  batchGrid.innerHTML = "";
-});
-
-function renderBatchGrid() {
-  // Header row
-  batchGrid.innerHTML = `
-    <div class="batch-header">
-      <span>Preview</span>
-      <span>File Name</span>
-      <span>Grade Level</span>
-      <span>Intensity</span>
-      <span>Action</span>
+        </div>
+      </div>
       
     </div>
-  `;
+  </section>
 
-  // Each uploaded file as a table row
-  allBatchFiles.forEach((file, index) => {
-    const row = document.createElement("div");
-    row.className = "batch-row";
-    const imgURL = URL.createObjectURL(file);
+  <!-- ============== SIMPLE TOGGLE SCRIPT ============== -->
+  <script>
+    const tabs = document.querySelectorAll(".auth-tab");
+    const forms = {
+      "login-form": document.getElementById("login-form"),
+      "signup-form": document.getElementById("signup-form"),
+    };
 
-    row.innerHTML = `
-      <div class="preview-cell"><img src="${imgURL}" alt="Preview" /></div>
-      <div class="file-name">${file.name}</div>
-      <div>
-        <select class="grade-level-select">
-          ${["1st","2nd","3rd","4th","5th","6th"].map(g => `<option>${g}</option>`).join("")}
-        </select>
-      </div>
-      <div>
-        <select class="intensity-select">
-          <option>Easy</option>
-          <option selected>Normal</option>
-          <option>Strict</option>
-        </select>
-      </div>
-      <div>
-        <button class="btn-purple grade-batch-btn" data-index="${index}">Grade</button>
-        <button class="delete-btn" title="Remove file" data-index="${index}">
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M6 7h12M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H8a2 2 0 01-2-2V7z" />
-  </svg>
-</button>
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        // switch tab visual
+        tabs.forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
 
-      </div>
-      
-    `;
-    batchGrid.appendChild(row);
+        // switch forms
+        Object.values(forms).forEach(f => (f.style.display = "none"));
+        const targetId = tab.getAttribute("data-target");
+        forms[targetId].style.display = "block";
+      });
+    });
+  </script>
+<script>
+  // ----------------------
+  // SWITCH LOGIN <-> SIGNUP
+  // ----------------------
+  document.querySelectorAll(".auth-tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".auth-form").forEach(f => f.style.display = "none");
+  
+      tab.classList.add("active");
+      document.getElementById(tab.dataset.target).style.display = "block";
+    });
   });
-
-  // ➕ Add new file button row
-  const addRow = document.createElement("div");
-  addRow.className = "add-row";
-  addRow.innerHTML = `<span>➕ Add more files</span>`;
-  addRow.addEventListener("click", () => batchFileInput.click());
-  batchGrid.appendChild(addRow);
-}
-
-
-// 🔹 Handle individual card grading
-
-
-// ✅ Global queue
-let gradingQueue = [];
-let isGradingInProgress = false;
-
-// ✅ Queue processor
-async function processNextInQueue() {
-  if (isGradingInProgress || gradingQueue.length === 0) return;
-
-  isGradingInProgress = true;
-  const { btn, row, file, gradeLevel, intensity } = gradingQueue.shift();
-  const statusCell = row.querySelector(".status") || (() => {
-    const sc = document.createElement("div");
-    sc.className = "status";
-    row.appendChild(sc);
-    return sc;
-  })();
-
-  btn.disabled = true;
-  const originalText = btn.textContent;
-  btn.innerHTML = `<span class="loading-spinner"></span>`;
-  statusCell.textContent = "⏳ Grading...";
-
-  try {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("gradeLevel", gradeLevel);
-    formData.append("intensity", intensity);
-
-    const response = await fetch("https://smartassessbackend-99pu.onrender.com/grade", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await response.json();
-
-    if (data.success && data.pdfUrl) {
-      const link = document.createElement("a");
-      link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
-      link.target = "_blank";
-      link.className = "download-btn";
-      link.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-             stroke-width="2" stroke="currentColor" width="18" height="18">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-        </svg>
-        <span>Report</span>
-      `;
-      btn.replaceWith(link);
-      statusCell.textContent = "✅ Graded successfully";
-    } else {
-      btn.disabled = false;
-      btn.textContent = "Retry";
-      statusCell.textContent = "⚠️ Error grading this file.";
-    }
-  } catch (err) {
-    console.error(err);
-    btn.disabled = false;
-    btn.textContent = "Retry";
-    statusCell.textContent = "❌ Failed to connect.";
-  } finally {
-    isGradingInProgress = false;
-    // process next in queue automatically
-    processNextInQueue();
-  }
-}
-
-// ✅ Event listener for all clicks
-batchGrid.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("grade-batch-btn")) return;
-  const btn = e.target;
-  const row = btn.closest(".batch-row");
-  const index = btn.dataset.index;
-  const file = allBatchFiles[index];
-  const gradeLevel = row.querySelector(".grade-level-select").value;
-  const intensity = row.querySelector(".intensity-select").value;
-
-  // Show that it’s queued up
-  btn.disabled = true;
-  btn.innerHTML = `<span class="loading-spinner"></span>`;
-  const statusCell = row.querySelector(".status") || (() => {
-    const sc = document.createElement("div");
-    sc.className = "status";
-    row.appendChild(sc);
-    return sc;
-  })();
-  statusCell.textContent = "🕓 Waiting in queue...";
-
-  gradingQueue.push({ btn, row, file, gradeLevel, intensity });
-
-  // If nothing is currently grading, start immediately
-  processNextInQueue();
-});
-// 🔹 Handle delete file action
-batchGrid.addEventListener("click", (e) => {
-  if (!e.target.classList.contains("delete-btn")) return;
-  const index = parseInt(e.target.dataset.index);
-  allBatchFiles.splice(index, 1); // remove from array
-  renderBatchGrid(); // re-render updated list
-});
-
-    // ---------- Grading Request ----------
-    gradeBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
   
-      const gradeLevel  = document.querySelector('.grade-levels .btn-toggle.selected')?.textContent;
-      const intensity   = document.querySelector('.grading-intensity .btn-toggle.selected')?.textContent;
-     
-      linkContainer.innerHTML = '';
-      parseError.style.display = 'none';
+  // ----------------------
+  // LOGIN FUNCTIONALITY
+  // ----------------------
+  document.getElementById("login-btn").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value.trim();
+    const password = document.getElementById("login-password").value.trim();
+    const msg = document.getElementById("login-message");
   
-      try {
-        loader.style.display = 'block';
+    msg.textContent = "";
+    msg.style.color = "#64748b";
   
-        let response, data;
+    try {
+      msg.textContent = "Processing login...";
   
-        if (uploadedFile) {
-          // === File Upload Flow ===
-          const formData = new FormData();
-          formData.append('file', uploadedFile);
-          formData.append('gradeLevel', gradeLevel);
-          formData.append('intensity', intensity);
-          
-  
-          console.log('🚀 Sending file to backend:', uploadedFile.name);
-  
-          response = await fetch('https://smartassessbackend-99pu.onrender.com/grade', {
-            method: 'POST',
-            body: formData
-          });
-        } else {
-          // === Text Submission Flow ===
-          const submissionText = textarea?.value?.trim();
-          if (!submissionText) {
-            parseError.textContent = 'Please enter text or upload a file before grading.';
-            parseError.style.display = 'block';
-            loader.style.display = 'none';
-            return;
-          }
-  
-          const payload = { gradeLevel, intensity, submission: submissionText };
-          console.log('🚀 Sending JSON payload:', payload);
-  
-          response = await fetch('https://smartassessbackend-99pu.onrender.com/grade', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-
-          });
-        }
-  
-        data = await response.json();
-        loader.style.display = 'none';
-  
-        if (data.success && data.pdfUrl) {
-  const link = document.createElement("a");
-  link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
-  link.target = "_blank";
-  link.className = "download-btn";
-  link.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-         stroke-width="2" stroke="currentColor" width="18" height="18">
-      <path stroke-linecap="round" stroke-linejoin="round"
-            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-    </svg>
-    <span>Report</span>
-  `;
-  btn.replaceWith(link);
-  statusCell.textContent = "✅ Graded successfully";
-}
-
-
- else {
-          linkContainer.textContent = 'Something went wrong. Please try again.';
-          linkContainer.style.color = 'red';
-          console.log('⚠️ Backend response:', data);
-        }
-  
-      } catch (error) {
-        console.error('❌ Grade error:', error);
-        loader.style.display = 'none';
-        linkContainer.textContent = 'Error connecting to backend.';
-        linkContainer.style.color = 'red';
-      }
-    });
-  
-    // ---------- Utilities ----------
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-  </script>
-   
-  <!-- ✅ Minimalist query param name injection -->
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const hashParams = new URLSearchParams(window.location.hash.slice(1));
-      const name = hashParams.get("name");
-      const email = hashParams.get("email");
-
-      console.log("🌐 window.location.href:", window.location.href);
-      console.log("🔍 Hash Params:", window.location.hash);
-      console.log("📩 Decoded name:", name);
-      console.log("📩 Decoded email:", email);
-
-      const greetingWrapper = document.getElementById("user-greeting-wrapper");
-      const authWrapper = document.getElementById("auth-action-wrapper");
-
-      if (name && greetingWrapper) {
-        const decodedName = decodeURIComponent(name);
-        greetingWrapper.innerHTML = `
-          <div style="
-            padding: 4px 12px;
-            font-size: 13px;
-            color: #6246ea;
-            background: #f3f0ff;
-            font-weight: 500;
-            border-radius: 6px;
-            line-height: 1.2;
-            display: inline-block;">
-            Welcome, ${decodedName}
-          </div>`;
-      } else {
-        greetingWrapper.innerHTML = `<button class="btn-light" onclick="window.location.href=' https://smartassess-fdhx.onrender.com/signin'">Sign In with Passcode</button>`;
-      }
-
-      if (name && authWrapper) {
-        authWrapper.innerHTML = `<button class="btn-purple" onclick="signOut()">Sign Out</button>`;
-      } else {
-        authWrapper.innerHTML = `<button class="btn-purple" onclick="window.location.href=' https://smartassess-fdhx.onrender.com/signup'">Register</button>`;
-      }
-    });
-
-    function signOut() {
-      window.location.hash = "";
-      window.location.reload();
-    }
-  </script>
-  <script>
-    (function propagateHash() {
-      const currentHash = window.location.hash;           // e.g. "#name=Huda&email=..."
-      if (!currentHash) return;
-  
-      // 1) Rewrite all same-origin links to carry the current hash
-      document.querySelectorAll('a[href]').forEach(a => {
-        const href = a.getAttribute('href');
-        if (!href) return;
-        // Skip absolute external links, mailto, tel, and pure hash anchors
-        if (/^(https?:|mailto:|tel:)/i.test(href) || href.startsWith('#')) return;
-  
-        // If link already has a hash, append as &…; else add the current hash
-        const newHref = href.includes('#')
-          ? href + '&' + currentHash.slice(1)
-          : href + currentHash;
-        a.setAttribute('href', newHref);
+      const res = await fetch("http://localhost:5001/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
   
-      // 2) Patch inline button navigations like: onclick="window.location.href='page.html'"
-      document.querySelectorAll('[onclick*="window.location.href"]').forEach(el => {
-        const m = el.getAttribute('onclick').match(/window\.location\.href\s*=\s*'([^']+)'/);
-        if (!m) return;
-        const url = m[1];
-        const newUrl = url.includes('#')
-          ? url + '&' + currentHash.slice(1)
-          : url + currentHash;
-        el.setAttribute('onclick', `window.location.href='${newUrl}'`);
+      const data = await res.json();
+      console.log("🔐 Login:", data);
+  
+      if (!res.ok) throw new Error(data.message || "Login failed");
+  
+      // Save user + token locally
+      localStorage.setItem("smartassessUser", JSON.stringify(data.user));
+      localStorage.setItem("jwt", data.token);
+  
+      msg.textContent = "✅ Login successful!";
+      msg.style.color = "green";
+  
+      const nameEnc = encodeURIComponent(data.user.name);
+      const emailEnc = encodeURIComponent(data.user.email);
+  
+      // IMPORTANT: home page requires hash params
+      setTimeout(() => {
+        window.location.href = `home.html#name=${nameEnc}&email=${emailEnc}`;
+      }, 1000);
+  
+    } catch (err) {
+      msg.textContent = "❌ " + err.message;
+      msg.style.color = "red";
+    }
+  });
+  
+  // ----------------------
+  // SIGNUP FUNCTIONALITY
+  // ----------------------
+  document.getElementById("signup-btn").addEventListener("click", async () => {
+    const name = document.getElementById("signup-name").value.trim();
+    const email = document.getElementById("signup-email").value.trim();
+    const password = document.getElementById("signup-password").value.trim();
+    const msg = document.getElementById("signup-message");
+  
+    msg.textContent = "";
+    msg.style.color = "#64748b";
+  
+    try {
+      msg.textContent = "Creating account...";
+  
+      const res = await fetch("http://localhost:5001/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
       });
   
-      // 3) Optional helper for future use: <button onclick="navWithHash('lessonplan.html')">
-      window.navWithHash = function (url) {
-        const h = window.location.hash;
-        window.location.href = url + (url.includes('#') ? '&' + h.slice(1) : h);
-      };
-    })();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Registration failed");
+  
+      msg.textContent = "✅ Account created! Redirecting...";
+      msg.style.color = "green";
+  
+      // Return to login tab
+      setTimeout(() => {
+        window.location.href = "Auth.html#login";
+      }, 1200);
+  
+    } catch (err) {
+      msg.textContent = "❌ " + err.message;
+      msg.style.color = "red";
+    }
+  });
   </script>
   
 </body>
 </html>
-
