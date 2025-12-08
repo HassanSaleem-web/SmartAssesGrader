@@ -417,7 +417,8 @@ let isGradingInProgress = false;
 
 // ✅ Queue processor
 async function processNextInQueue() {
-  if (isGradingInProgress || gradingQueue.length === 0) return;
+  if (isGradingInProgress) return;  
+if (gradingQueue.length === 0) return;
 
   isGradingInProgress = true;
 
@@ -449,11 +450,16 @@ async function processNextInQueue() {
   const overlay = document.createElement("div");
   overlay.className = "card-loading-overlay";
   overlay.innerHTML = `
-      <div class="overlay-spinner"></div>
-      <div style="font-size:14px; color:#1e293b; font-weight:500;">
-        Grading...
-      </div>
-  `;
+  <div class="overlay-spinner"></div>
+  <div style="
+    font-size:14px;
+    color:#1e293b;
+    font-weight:500;
+    margin-top:8px;">
+    Grading...
+  </div>
+`;
+
 
   // Attach overlay on top of card
   row.style.position = "relative";   // IMPORTANT
@@ -486,14 +492,24 @@ async function processNextInQueue() {
       link.target = "_blank";
       link.className = "download-btn";
       link.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none"
-             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
-             width="18" height="18">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
-        </svg>
-        <span>Report</span>
-      `;
+  <div style="
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 14px;
+    background:#6246ea;
+    color:white;
+    border-radius:6px;
+    font-weight:500;">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+           viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+           width="18" height="18">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
+      </svg>
+      Download Report
+  </div>
+`;
       
       btn.replaceWith(link);
       statusCell.textContent = "✅ Graded successfully";
@@ -526,15 +542,29 @@ batchGrid.addEventListener("click", (e) => {
   const btn = e.target.closest(".grade-batch-btn");
   if (!btn) return;
 
-  const card = btn.closest(".batch-card");   // FIXED
+  const card = btn.closest(".batch-card");
   const index = btn.dataset.index;
   const file = allBatchFiles[index];
 
   const gradeLevel = card.querySelector(".grade-level-select").value;
-  const intensity = card.querySelector(".intensity-select").value;
+  const intensity  = card.querySelector(".intensity-select").value;
 
   btn.disabled = true;
   btn.innerHTML = `<span class="loading-spinner"></span>`;
+
+  // 🟣 FIX: QUEUE OVERLAY (only here!)
+  if (!card.querySelector(".card-loading-overlay")) {
+      const waitOverlay = document.createElement("div");
+      waitOverlay.className = "card-loading-overlay";
+      waitOverlay.innerHTML = `
+        <div class="overlay-spinner"></div>
+        <div style="font-size:14px; color:#1e293b; font-weight:500; margin-top:8px;">
+          Waiting in queue...
+        </div>
+      `;
+      card.style.position = "relative";
+      card.appendChild(waitOverlay);
+  }
 
   let statusCell =
     card.querySelector(".status") ||
@@ -545,22 +575,11 @@ batchGrid.addEventListener("click", (e) => {
       return sc;
     })();
 
-   
-
-
   gradingQueue.push({ btn, row: card, file, gradeLevel, intensity });
   processNextInQueue();
 });
 
-// Delete file row
-batchGrid.addEventListener("click", (e) => {
-  const delBtn = e.target.closest(".delete-btn");
-  if (!delBtn) return;
 
-  const index = parseInt(delBtn.dataset.index, 10);
-  allBatchFiles.splice(index, 1);
-  renderBatchGrid();
-});
 // 🔹 Handle delete file action
 batchGrid.addEventListener("click", (e) => {
   if (!e.target.classList.contains("delete-btn")) return;
@@ -635,8 +654,13 @@ batchGrid.addEventListener("click", (e) => {
     </svg>
     <span>Report</span>
   `;
-  btn.replaceWith(link);
-  statusCell.textContent = "✅ Graded successfully";
+  linkContainer.innerHTML = "";
+linkContainer.appendChild(link);
+
+gradeBtn.disabled = false;
+gradeBtn.textContent = "Grade now";
+
+
 }
 
 
@@ -718,4 +742,6 @@ batchGrid.addEventListener("click", (e) => {
   
 </body>
 </html>
+
+
 

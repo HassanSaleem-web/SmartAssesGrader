@@ -147,6 +147,8 @@
       // Save user + token locally
       localStorage.setItem("smartassessUser", JSON.stringify(data.user));
       localStorage.setItem("jwt", data.token);
+      localStorage.setItem("teacherName", data.user.name);
+
   
       msg.textContent = "✅ Login successful!";
       msg.style.color = "green";

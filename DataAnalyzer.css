@@ -932,3 +932,39 @@ body {
 }
 
 
+.ai-report {
+  line-height: 1.6;
+  color: #333;
+  font-size: 15px;
+  white-space: normal;
+}
+
+.ai-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 18px 0 8px;
+  color: #3f3d56;
+}
+
+.ai-heading {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 16px 0 6px;
+  color: #4b4a63;
+}
+
+.ai-subheading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 10px 0 4px;
+  color: #66657a;
+}
+
+.ai-report ul {
+  margin-left: 18px;
+  margin-bottom: 12px;
+}
+
+.ai-report p {
+  margin: 10px 0;
+}

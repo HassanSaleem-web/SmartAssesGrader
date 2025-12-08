@@ -532,8 +532,9 @@
   async function populateAssessmentClassrooms() {
   const dropdown = document.getElementById("assessment-classroom");
   const token = localStorage.getItem("jwt");
-
-  const res = await fetch("http://localhost:5001/api/classrooms", {
+ 
+console.log("teachername:", teacherName);
+  const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
     headers: { "Authorization": `Bearer ${token}` }
   });
 
@@ -559,7 +560,7 @@ document.getElementById("assessment-classroom").addEventListener("change", (e) =
 async function loadStudentsForAssessment(classroomId) {
   const token = localStorage.getItem("jwt");
 
-  const res = await fetch(`http://localhost:5001/api/classrooms/${classroomId}`, {
+  const res = await fetch(`https://backendregister-dem3.onrender.com/api/classrooms/${classroomId}`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
 
@@ -626,7 +627,7 @@ async function loadStudentsForAssessment(classroomId) {
     
       const token = localStorage.getItem("jwt");
     
-      const res = await fetch("http://localhost:5001/api/students/create", {
+      const res = await fetch("https://backendregister-dem3.onrender.com/api/students/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -742,7 +743,7 @@ async function loadStudentsForAssessment(classroomId) {
             const token = localStorage.getItem("jwt");
 
         
-            const res = await fetch("http://localhost:5001/api/classrooms/create", {
+            const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms/create", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -791,7 +792,7 @@ async function loadStudentsForAssessment(classroomId) {
                       }
                     
                       try {
-                        const res = await fetch("http://localhost:5001/api/classrooms", {
+                        const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
                           method: "GET",
                           headers: {
                             "Authorization": `Bearer ${token}`,
@@ -828,7 +829,7 @@ async function loadStudentsForAssessment(classroomId) {
     async function loadSelectedClassroom(classroomId) {
       const token = localStorage.getItem("jwt");
     
-      const res = await fetch(`http://localhost:5001/api/classrooms/${classroomId}`, {
+      const res = await fetch(`https://backendregister-dem3.onrender.com/api/classrooms/${classroomId}`, {
         headers: {
           "Authorization": `Bearer ${token}`
         }
@@ -1113,7 +1114,7 @@ Object.values(grouped).forEach(item => {
               
                 const token = localStorage.getItem("jwt");
               
-                const res = await fetch("http://localhost:5001/api/assessments/create", {
+                const res = await fetch("https://backendregister-dem3.onrender.com/api/assessments/create", {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json",
@@ -1148,7 +1149,7 @@ Object.values(grouped).forEach(item => {
               async function openStudentDetailCard(studentId) {
   const token = localStorage.getItem("jwt");
 
-  const res = await fetch(`http://localhost:5001/api/students/${studentId}`, {
+  const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
 
@@ -1204,7 +1205,7 @@ Object.values(grouped).forEach(item => {
                     async function loadAllStudents() {
                       const token = localStorage.getItem("jwt");
                     
-                      const res = await fetch("http://localhost:5001/api/students/all", {
+                      const res = await fetch("https://backendregister-dem3.onrender.com/api/students/all", {
                         headers: { "Authorization": `Bearer ${token}` }
                       });
                     
@@ -1280,7 +1281,7 @@ if (e.target.classList.contains("delete-student")) {
 
   const token = localStorage.getItem("jwt");
 
-  const res = await fetch(`http://localhost:5001/api/students/${studentId}`, {
+  const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` }
   });
@@ -1405,7 +1406,7 @@ document.querySelectorAll(".dots-menu").forEach(m => m.classList.remove("show"))
                         dropdown.innerHTML = "";
                     
                         try {
-                          const res = await fetch("http://localhost:5001/api/classrooms", {
+                          const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
                             headers: { "Authorization": `Bearer ${token}` }
                           });
                     
@@ -1436,7 +1437,7 @@ document.querySelectorAll(".dots-menu").forEach(m => m.classList.remove("show"))
                         const token = localStorage.getItem("jwt");
                     
                         try {
-                          const res = await fetch(`http://localhost:5001/api/students/${studentId}`, {
+                          const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}`, {
                             headers: { "Authorization": `Bearer ${token}` }
                           });
                     
@@ -1524,7 +1525,7 @@ selector.onchange = () => {
 
                     
                         try {
-                          const res = await fetch(`http://localhost:5001/api/students/${currentEditingStudentId}`, {
+                          const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${currentEditingStudentId}`, {
                             method: "PUT",
                             headers: {
                               "Authorization": `Bearer ${token}`,
@@ -1647,7 +1648,7 @@ async function saveEditedAssessment(studentId, assessmentId) {
 
 
 
-  const res = await fetch(`http://localhost:5001/api/students/${studentId}/assessments/${assessmentId}`, {
+  const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}/assessments/${assessmentId}`, {
     method: "PUT",
     headers: {
       "Authorization": `Bearer ${token}`,
@@ -1674,7 +1675,7 @@ async function saveEditedAssessment(studentId, assessmentId) {
                         if (!confirm("Delete this assessment?")) return;
                     
                         try {
-                          const res = await fetch(`http://localhost:5001/api/students/${studentId}/assessments/${assessmentId}`, {
+                          const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}/assessments/${assessmentId}`, {
                             method: "DELETE",
                             headers: { "Authorization": `Bearer ${token}` }
                           });
@@ -1700,7 +1701,7 @@ async function populateReportClassrooms() {
   const token = localStorage.getItem("jwt");
   const dropdown = document.getElementById("report-classroom");
 
-  const res = await fetch("http://localhost:5001/api/classrooms", {
+  const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
     headers: { "Authorization": `Bearer ${token}` }
   });
 
@@ -1728,7 +1729,7 @@ async function populateReportStudents(classroomId) {
 
   if (!classroomId) return;
 
-  const res = await fetch(`http://localhost:5001/api/classrooms/${classroomId}`, {
+  const res = await fetch(`https://backendregister-dem3.onrender.com/api/classrooms/${classroomId}`, {
     headers: { "Authorization": `Bearer ${token}` }
   });
 
@@ -1784,7 +1785,7 @@ console.log("Selected studentIds for report:", studentIds);
                         `;
                     
                         try {
-                          const res = await fetch("http://localhost:5001/api/reports/generate", {
+                          const res = await fetch("https://backendregister-dem3.onrender.com/api/reports/generate", {
                             method: "POST",
                             headers: {
                               "Content-Type": "application/json",
@@ -1819,67 +1820,76 @@ console.log("Selected studentIds for report:", studentIds);
                             : "Full year / all dates";
                     
                           // Basic summary table for selected students
-                          const studentRows = (data.rawData || [])
+                          const rawData = data.report || [];
 
-                            .map(r => `
-                              <tr>
-                                <td>${r.name}</td>
-                                <td>${r.ell ? "ELL" : "Non-ELL"}</td>
-                                <td>${r.overallAverage ?? "—"}</td>
-                                <td>${r.totalAssessments}</td>
-                                <td>${r.interventionFlag ? "Yes" : "No"}</td>
-                              </tr>
-                            `)
-                            .join("");
-                    
-                          const aiText = (data.aiNarrative || data.aiSummary || "")
-                            .replace(/\n/g, "<br>");
-                    
-                          output.innerHTML = `
-                            <div class="report-header">
-                              <h3 class="form-label">Classroom Report</h3>
-                              <p class="info-text">
-                                <b>Classroom:</b> ${classroomName}<br>
-                                <b>Date Range:</b> ${dateLabel}<br>
-                                <b>Students Included:</b> ${data.rawData ? data.rawData.length : 0}
+const studentRows = rawData.map(r => `
+  <tr>
+    <td>${r.name}</td>
+    <td>${r.ell ? "ELL" : "Non-ELL"}</td>
+    <td>${r.overallAverage ?? "—"}</td>
+    <td>${r.totalAssessments}</td>
+    <td>${r.interventionFlag ? "Yes" : "No"}</td>
+  </tr>
+`).join("");
+const teacherName = localStorage.getItem("teacherName");
+console.log("Teacher from localStorage:", teacherName);
 
-                              </p>
-                            </div>
-                    
-                            <div class="grading-card" style="margin-top: 16px;">
-                              <h4 class="form-label">Student Overview</h4>
-                              <table class="data-table" style="margin-top: 10px; width: 100%;">
-                                <thead>
-                                  <tr>
-                                    <th>Name</th>
-                                    <th>ELL</th>
-                                    <th>Avg %</th>
-                                    <th># Assessments</th>
-                                    <th>Intervention Needed?</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  ${studentRows || `
-                                    <tr>
-                                      <td colspan="5" style="text-align:center; opacity:0.7;">
-                                        No assessment data found for the selected filters.
-                                      </td>
-                                    </tr>
-                                  `}
-                                </tbody>
-                              </table>
-                            </div>
-                    
-                            ${aiText
-                              ? `
-                              <div class="grading-card" style="margin-top: 16px;">
-                                <h4 class="form-label">AI Narrative & Rubric-Aligned Insights</h4>
-                                <p class="info-text" style="white-space: normal;">${aiText}</p>
-                              </div>
-                            `
-                              : ""
-                            }
-                          `;
+const today = new Date().toISOString().split("T")[0];
+const aiText = formatAiReport(data.aiNarrativeReport || "")
+.replace(/\n/g, "<br>");
+
+output.innerHTML = `
+  <div class="report-header">
+    <h3 class="form-label">Classroom Report</h3>
+    <p class="info-text">
+      <b>Classroom:</b> ${classroomName}<br>
+      <b>Date Range:</b> ${dateLabel}<br>
+      <b>Students Included:</b> ${rawData.length}<br>
+      <b>Group Average:</b> ${data.groupLevelAnalysis?.groupAverage ?? "—"}%<br>
+      <b>Total Assessments:</b> ${data.groupLevelAnalysis?.totalAssessments ?? "0"}
+    </p>
+  </div>
+
+  <div class="grading-card" style="margin-top: 16px;">
+    <h4 class="form-label">Student Overview</h4>
+    <table class="data-table" style="margin-top: 10px; width: 100%;">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>ELL</th>
+          <th>Avg %</th>
+          <th># Assessments</th>
+          <th>Intervention Needed?</th>
+        </tr>
+      </thead>
+      <tbody">
+        ${rawData.length > 0 ? studentRows : `
+          <tr>
+            <td colspan="5" style="text-align:center; opacity:0.7;">
+              No assessment data found for the selected filters.
+            </td>
+          </tr>
+        `}
+      </tbody>
+    </table>
+  </div>
+
+
+ ${aiText ? `
+  <div class="grading-card" style="margin-top: 16px;">
+    <h4 class="form-label">AI Narrative & Insights</h4>
+
+    <p class="info-text">
+      <b>Teacher:</b> ${teacherName}<br>
+      <b>Report Date:</b> ${today}
+    </p>
+
+    <div class="ai-report">${aiText}</div>
+  </div>
+` : ""}
+
+
+`;
                         } catch (err) {
                           console.error("Report fetch error:", err);
                           output.innerHTML = `
@@ -1894,7 +1904,198 @@ console.log("Selected studentIds for report:", studentIds);
                       document
                         .getElementById("generate-report-btn")
                         .addEventListener("click", generateReportHandler);
+                        function formatAiReport(markdown) {
+  if (!markdown) return "";
+
+  let html = markdown;
+
+  // Headings
+  html = html.replace(/^### (.*$)/gim, '<h3 class="ai-subheading">$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2 class="ai-heading">$1</h2>');
+  html = html.replace(/^# (.*$)/gim,  '<h1 class="ai-title">$1</h1>');
+
+  // Bold text
+  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+
+  // Bullet points
+  html = html.replace(/^\s*[-•] (.*)$/gim, '<li>$1</li>');
+  html = html.replace(/(<li>[\s\S]+?<\/li>)/gim, '<ul>$1</ul>');
+
+  // Paragraphs (blank lines)
+  html = html.replace(/\n\s*\n/g, '</p><p>');
+  html = "<p>" + html + "</p>";
+
+  // Convert line breaks to <br>
+  html = html.replace(/\n/g, "<br>");
+
+  return html;
+}
+
                     </script>
+                    <script>
+                      document.addEventListener("DOMContentLoaded", loadDashboard);
+                      
+                      async function loadDashboard() {
+                        const token = localStorage.getItem("jwt");
+                        if (!token) return;
+                      
+                        // -----------------------------
+                        // 1️⃣ FETCH ALL CLASSROOMS
+                        // -----------------------------
+                        const classRes = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        const { classrooms } = await classRes.json();
+                      
+                        // Storage for dashboard data
+                        let totalStudents = 0;
+                        let totalAssessments = 0;
+                        let interventionCount = 0;
+                        let growthMap = {};
+                        let distribution = { "0-59": 0, "60-69": 0, "70-84": 0, "85-100": 0 };
+                        let ellScores = [];
+                        let nonEllScores = [];
+                        let timeline = {};
+                      
+                        // -----------------------------
+                        // 2️⃣ LOOP ALL CLASSROOMS
+                        // -----------------------------
+                        for (const cls of classrooms) {
+                          const detailRes = await fetch(
+                            `https://backendregister-dem3.onrender.com/api/classrooms/${cls._id}`,
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                      
+                          const detail = await detailRes.json();
+                          const students = detail.classroom.students || [];
+                      
+                          totalStudents += students.length;
+                      
+                          // -----------------------------
+                          // 3️⃣ LOOP THROUGH STUDENTS
+                          // -----------------------------
+                          students.forEach(s => {
+                            if (s.interventionFlag) interventionCount++;
+                      
+                            if (s.averageScore != null) {
+                              if (s.ell) ellScores.push(s.averageScore);
+                              else nonEllScores.push(s.averageScore);
+                            }
+                      
+                            // Assessments
+                            (s.assessments || []).forEach(a => {
+                              totalAssessments++;
+                      
+                              const pct = a.percentage ?? ((a.score / a.maxScore) * 100);
+                              const date = new Date(a.date).toDateString();
+                      
+                              // Growth data
+                              if (!growthMap[date]) growthMap[date] = [];
+                              growthMap[date].push(pct);
+                      
+                              // Score bands
+                              if (pct < 60) distribution["0-59"]++;
+                              else if (pct < 70) distribution["60-69"]++;
+                              else if (pct < 85) distribution["70-84"]++;
+                              else distribution["85-100"]++;
+                      
+                              // Timeline
+                              if (!timeline[date]) timeline[date] = 0;
+                              timeline[date]++;
+                            });
+                          });
+                        }
+                      
+                        // -----------------------------
+                        // 4️⃣ UPDATE METRICS UI
+                        // -----------------------------
+                        document.getElementById("total-classrooms").textContent = classrooms.length;
+                        document.getElementById("total-students").textContent = totalStudents;
+                        document.getElementById("total-assessments").textContent = totalAssessments;
+                        document.getElementById("intervention-count").textContent = interventionCount;
+                      
+                        // -----------------------------
+                        // 5️⃣ DRAW CHARTS
+                        // -----------------------------
+                        drawGrowthChart(growthMap);
+                        drawDistributionChart(distribution);
+                        drawEllChart(ellScores, nonEllScores);
+                        drawTimelineChart(timeline);
+                      }
+                      
+                      /* CHART FUNCTIONS (same style as your classroom charts) */
+                      function drawGrowthChart(map) {
+                        const labels = Object.keys(map);
+                        const values = labels.map(d => {
+                          const arr = map[d];
+                          return arr.reduce((a,b)=>a+b,0) / arr.length;
+                        });
+                      
+                        new Chart(document.getElementById("growthChart"), {
+                          type: "line",
+                          data: {
+                            labels,
+                            datasets: [{
+                              label: "Average Score (%)",
+                              data: values,
+                              borderColor: "#6246ea",
+                              backgroundColor: "rgba(98,70,234,0.3)",
+                              tension: 0.3
+                            }]
+                          },
+                          options: { scales: { y: { min: 0, max: 100 } } }
+                        });
+                      }
+                      
+                      function drawDistributionChart(dist) {
+                        new Chart(document.getElementById("distributionChart"), {
+                          type: "bar",
+                          data: {
+                            labels: Object.keys(dist),
+                            datasets: [{
+                              label: "Students",
+                              data: Object.values(dist),
+                              backgroundColor: "#4dabf7"
+                            }]
+                          }
+                        });
+                      }
+                      
+                      function drawEllChart(ell, nonEll) {
+                        const ellAvg = ell.length ? (ell.reduce((a,b)=>a+b,0) / ell.length) : 0;
+                        const nonAvg = nonEll.length ? (nonEll.reduce((a,b)=>a+b,0) / nonEll.length) : 0;
+                      
+                        new Chart(document.getElementById("ellChart"), {
+                          type: "bar",
+                          data: {
+                            labels: ["ELL", "Non-ELL"],
+                            datasets: [{
+                              label: "Avg Score (%)",
+                              data: [ellAvg, nonAvg],
+                              backgroundColor: ["#ff922b", "#4c6ef5"]
+                            }]
+                          },
+                          options: { scales: { y: { min: 0, max: 100 } } }
+                        });
+                      }
+                      
+                      function drawTimelineChart(map) {
+                        new Chart(document.getElementById("timelineChart"), {
+                          type: "line",
+                          data: {
+                            labels: Object.keys(map),
+                            datasets: [{
+                              label: "Assessments Per Day",
+                              data: Object.values(map),
+                              borderColor: "#2ecc71",
+                              backgroundColor: "rgba(46,204,113,0.3)",
+                              tension: 0.3
+                            }]
+                          }
+                        });
+                      }
+                      </script>
+                      
                     
 </body>
 </html>
