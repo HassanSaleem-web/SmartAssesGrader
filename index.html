@@ -133,7 +133,7 @@
     try {
       msg.textContent = "Processing login...";
   
-      const res = await fetch("http://localhost:5001/api/login", {
+      const res = await fetch("https://backendregister-dem3.onrender.com/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -182,7 +182,7 @@
     try {
       msg.textContent = "Creating account...";
   
-      const res = await fetch("http://localhost:5001/api/register", {
+      const res = await fetch("https://backendregister-dem3.onrender.com/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
