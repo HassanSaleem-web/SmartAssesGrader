@@ -46,14 +46,17 @@
   <style>
     /* Custom Layout for Grading Mode */
     .app-main {
-      padding: 0 !important;
-      /* Full width/height control */
       background: #F8FAFC;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
       width: 100%;
+      padding: 32px 48px;
+      /* Inherits overflow-y: auto from layout.css */
+    }
+
+    html,
+    body {
+      width: 101%;
     }
 
     /* Top Bar */
@@ -134,24 +137,24 @@
       display: grid;
       grid-template-columns: 1.2fr 0.8fr;
       flex: 1;
-      overflow: hidden;
+      gap: 24px;
     }
 
     /* Left Panel: Submission */
     .submission-col {
       display: flex;
       flex-direction: column;
-      border-right: 1px solid var(--surface-200);
+      border: 1px solid var(--surface-200);
+      border-radius: var(--radius-lg);
       background: white;
       position: relative;
       min-width: 0;
       width: 100%;
+      overflow: hidden;
     }
 
     .submission-content {
       padding: 32px;
-      flex: 1;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 20px;
@@ -217,13 +220,15 @@
     /* Right Panel: Results */
     .results-col {
       padding: 32px;
-      overflow-y: auto;
       background: white;
+      border: 1px solid var(--surface-200);
+      border-radius: var(--radius-lg);
       display: flex;
       flex-direction: column;
       gap: 24px;
       min-width: 0;
-      width: 100%;
+      width: 106%;
+      height: fit-content;
     }
 
     .status-bar {
@@ -442,7 +447,7 @@
           style="width: 40px; height: 40px; background: var(--brand-surface); color: var(--brand-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
           <i class="ph ph-graduation-cap" style="font-size: 1.5rem;"></i>
         </div>
-        AI Grader <span style="color: var(--text-muted); font-weight: 400; font-size: 1rem;">Core</span>
+        AI Grader <span style="color: var(--text-muted); font-weight: 400; font-size: 1rem; margin-top:4px;">Core</span>
       </h1>
 
       <!-- Top Action Bar -->
@@ -722,7 +727,7 @@
 
       if (!studentId) return alert("Please select a student from the context panel first.");
 
-      const btn = document.getElementById('btn-save-to-student');
+      const btn = document.getElementById('btn-save');
       btn.disabled = true;
       btn.innerHTML = '<i class="ph ph-spinner animate-spin"></i> Saving...';
 
@@ -1106,11 +1111,8 @@
             </div>
 
             <!-- Action Footer -->
-            <div class="action-footer" style="padding:0; margin-top:8px; background:transparent; border:none; display:flex; flex-direction:column; gap:12px;">
-              <!-- Removed duplicate buttons from inner componeFailed to load resource: the server responded with a status of 404 (Not Found)
-roster:961  SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
-(anonymous) @ roster:961
-css-generic.js:1 uBOL: Generic cosmetic filtering stopped because no more DOM changes execution -->
+            <div class="action-footer" id="dynamic-action-footer" style="padding:0; margin-top:8px; background:transparent; border:none; display:flex; flex-direction:column; gap:12px;">
+              <!-- Dynamic buttons appended here by the caller -->
             </div>
 
           </div>
@@ -1292,6 +1294,18 @@ css-generic.js:1 uBOL: Generic cosmetic filtering stopped because no more DOM ch
 
             // --- Use shared UI Generator ---
             resultsPanel.innerHTML = getReportHTML(data.result, window.API_CONFIG.GRADING_BASE_URL + data.pdfUrl, data.metrics, data.strengths, data.weaknesses);
+
+            // Append Single-Mode Action Footer
+            resultsPanel.innerHTML += `
+              <div class="action-footer" style="padding:0; margin-top:16px; background:transparent; border:none; display:flex; flex-direction:column; gap:12px;">
+                <a href="${window.API_CONFIG.GRADING_BASE_URL + data.pdfUrl}" target="_blank" class="btn btn-secondary w-full hover-lift" style="width:100%; justify-content:center; padding:12px;">
+                   <i class="ph ph-file-pdf text-xl"></i> Download Full AI PDF Report
+                </a>
+                <button id="btn-save" onclick="saveAssessmentToStudent()" class="btn btn-primary w-full hover-lift" style="width:100%; justify-content:center; padding:12px; font-size:1rem; gap:8px;">
+                   <i class="ph ph-floppy-disk" style="font-size:1.2rem;"></i> Save to Student Record
+                </button>
+              </div>
+            `;
 
             gradeBtn.innerHTML = '<i class="ph ph-check"></i> Graded!';
           } else {
