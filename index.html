@@ -204,8 +204,14 @@
       e.preventDefault();
       const email = document.getElementById('login-email').value;
       const password = document.getElementById('login-password').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalHtml = btn.innerHTML;
 
       try {
+        btn.innerHTML = 'Signing In...';
+        btn.disabled = true;
+        showMessage('');
+
         const res = await fetch(`${window.API_CONFIG.AUTH_BASE_URL}/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -218,7 +224,9 @@
         localStorage.setItem('jwt', data.token);
         window.location.href = `home.html`;
       } catch (err) {
-        showMessage(err.message);
+        showMessage(err.message === 'Failed to fetch' ? 'Cannot reach server. It might be sleeping, try again in 30s.' : err.message);
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
       }
     });
 
@@ -227,8 +235,14 @@
       const name = document.getElementById('signup-name').value;
       const email = document.getElementById('signup-email').value;
       const password = document.getElementById('signup-password').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      const originalHtml = btn.innerHTML;
 
       try {
+        btn.innerHTML = 'Submitting...';
+        btn.disabled = true;
+        showMessage('');
+
         const res = await fetch(`${window.API_CONFIG.AUTH_BASE_URL}/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -240,7 +254,9 @@
         showMessage('Account created! Logging you in...', 'success');
         setTimeout(() => switchTab('login'), 1000);
       } catch (err) {
-        showMessage(err.message);
+        showMessage(err.message === 'Failed to fetch' ? 'Cannot reach server. It might be sleeping, try again in 30s.' : err.message);
+        btn.innerHTML = originalHtml;
+        btn.disabled = false;
       }
     });
   </script>
