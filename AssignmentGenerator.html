@@ -1,97 +1,428 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Smart Assess – Assignment Generator</title>
-  <link rel="stylesheet" href="lessonplan.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <script src="config.js"></script>
+
+  <style>
+    /* Specific overrides for this page */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    /* Print Styles */
+    @media print {
+      @page {
+        margin: 1cm;
+      }
+
+      html,
+      body {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+      }
+
+      .app-sidebar,
+      .left-panel,
+      .top-bar,
+      #preview-empty,
+      #time-est,
+      #loader {
+        display: none !important;
+      }
+
+      .app-main,
+      .right-panel,
+      #doc-scroll-area,
+      #preview-card {
+        display: block !important;
+        position: static !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        background: white !important;
+      }
+
+      #doc-content {
+        padding: 0 !important;
+      }
+
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <div class="navbar-wrapper">
-    <header class="navbar">
-      <div class="navbar-content">
-        <div class="logo-container">
-          <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
+
+  <!-- SIDEBAR (Standardized) -->
+  <aside class="app-sidebar" style="z-index: 50;">
+    <div class="sidebar-header">
+      <img src="logo.svg" alt="Logo" class="sidebar-logo" />
+    </div>
+
+    <nav class="nav-links">
+      <div class="nav-category">Main</div>
+
+      <a href="home.html" class="nav-item">
+        <i class="ph ph-graduation-cap nav-icon"></i><span>Grader</span>
+      </a>
+
+      <a href="AssignmentGenerator.html" class="nav-item active">
+        <i class="ph ph-files nav-icon"></i>
+        <span>Assignments</span>
+      </a>
+
+      <a href="lessonplan.html" class="nav-item">
+        <i class="ph ph-chalkboard-teacher nav-icon"></i>
+        <span>Lesson Plans</span>
+      </a>
+
+      <a href="DataAnalyzer.html" class="nav-item">
+        <i class="ph ph-chart-bar nav-icon"></i>
+        <span>Data Analyzer</span>
+      </a>
+
+      <div class="nav-category">Library</div>
+      <!-- <a href="#" class="nav-item">
+        <i class="ph ph-folder nav-icon"></i>
+        <span>My Content</span>
+      </a> -->
+      <a href="roster.html" class="nav-item">
+        <i class="ph ph-users nav-icon"></i>
+        <span>Student Roster</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="avatar"
+          style="width:36px; height:36px; border-radius:10px; background:var(--brand-surface); display:flex; align-items:center; justify-content:center; color:var(--brand-primary); font-weight:bold;">
+          T
         </div>
-        <div class="nav-actions">
-          <button onclick="window.location.href='home.html'" class="btn-light">← Back to Grader</button>
+        <div style="flex:1;">
+          <div id="sidebar-user-name" style="font-weight:600; font-size:0.9rem; color:var(--text-main);">Teacher</div>
         </div>
+        <button onclick="localStorage.clear(); window.location.href='index.html'" class="btn-ghost" title="Sign Out"
+          style="padding:4px; margin-left: auto;">
+          <i class="ph ph-sign-out" style="font-size: 1.2rem;"></i>
+        </button>
       </div>
-    </header>
-  </div>
+    </div>
+  </aside>
 
-  <main class="hero-container">
-    <section class="hero-content">
-      <h1 class="hero-title">Assignment Generator</h1>
-      <p class="hero-subtitle">Design assignments aligned to your unit, grade level, and objectives.</p>
-    </section>
-  </main>
+  <!-- MAIN CONTENT -->
+  <main class="app-main"
+    style="display:flex; padding:0; height:100vh; overflow:hidden; background:var(--brand-surface);">
 
-  <section class="grading-form">
-    <div class="form-card">
-      <form id="assignment-form">
-        <div class="form-grid">
-          <div class="form-left">
-            <div class="form-section">
-              <label class="form-label" for="subject">Subject</label>
-              <input type="text" id="subject" placeholder="e.g. History, Science, ELA" />
+    <!-- LEFT PANEL: Configuration -->
+    <div class="left-panel"
+      style="width: 715px; min-width:450px; background:white; border-right:1px solid var(--surface-200); display:flex; flex-direction:column; overflow-y:auto; z-index:10; padding-bottom: 32px;">
+      <div style="padding:32px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 32px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div
+              style="width:40px; height:40px; border-radius:8px; background:var(--brand-surface); display:flex; align-items:center; justify-content:center; color:var(--brand-primary);">
+              <i class="ph ph-files nav-icon" style="font-size:1.5rem;"></i>
             </div>
+            <div>
+              <h2 style="font-size:1.1rem; font-weight:700; color:var(--text-main); margin:0;">Assignment Generator
+                <span style="font-weight:400; color:var(--text-muted);">AI</span>
+              </h2>
+            </div>
+          </div>
+          <button type="button" id="sidebar-toggle" class="btn btn-ghost" style="padding:4px; margin:-4px;"
+            title="Toggle Sidebar">
+            <i class="ph ph-list" style="font-size:1.4rem;"></i>
+          </button>
+        </div>
 
-            <div class="form-section">
-              <label class="form-label" for="grade">Grade Level</label>
-              <select id="grade">
-                <option value="">Select grade...</option>
+        <div style="margin-bottom: 24px;">
+          <h3
+            style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); letter-spacing:0.05em; margin-bottom:4px;">
+            CONFIGURATION</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Define the parameters for your assignment.</p>
+        </div>
+
+        <form id="assignment-form" style="display:flex; flex-direction:column; gap:20px;">
+
+          <!-- Grade and Subject Row -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+            <!-- Grade Level -->
+            <div>
+              <label class="label"
+                style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Grade
+                Level</label>
+              <select class="select" id="grade"
+                style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);">
+                <option value="">Select...</option>
                 <script>
-                  document.write([...Array(12)].map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''));
+                  document.write([...Array(12)].map((_, i) => `<option value="${i + 1}" ${i + 1 === 10 ? 'selected' : ''}>${i + 1}th Grade</option>`).join(''));
                 </script>
               </select>
             </div>
-
-            <div class="form-section">
-              <label class="form-label" for="unit">Unit Title</label>
-              <input type="text" id="unit" placeholder="e.g. Civil Rights Movement" />
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="topic">Assignment Topic</label>
-              <input type="text" id="topic" placeholder="e.g. Causes of WWII" />
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="objectives">Learning Objectives</label>
-              <textarea id="objectives" rows="2" placeholder="What should students learn?"></textarea>
+            <!-- Subject -->
+            <div>
+              <label class="label"
+                style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Subject</label>
+              <input class="input" type="text" id="subject" placeholder="e.g. Physics" value="Physics"
+                style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);" />
             </div>
           </div>
 
-          <div class="form-right">
-            <div class="form-section">
-              <label class="form-label">Assignment Features</label>
-              <div class="checkbox-group">
-                <label><input type="checkbox" name="includeRubric" /> Include Rubric</label>
-                <label><input type="checkbox" name="includeInstructions" /> Student Instructions</label>
-                <label><input type="checkbox" name="includeScaffoldedSupport" /> Scaffolded Support</label>
-                <label><input type="checkbox" name="requireResearch" /> Research Required</label>
-                <label><input type="checkbox" name="includeReflection" /> Student Reflection</label>
-                <label><input type="checkbox" name="multipleVersions" /> Multiple Versions</label>
-              </div>
+          <!-- Unit Title -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Unit
+              Title</label>
+            <input class="input" type="text" id="unit" placeholder="e.g. Civil Rights Movement"
+              value="Newton's Laws of Motion"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);" />
+          </div>
+
+          <!-- Assignment Topic -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Assignment
+              Topic</label>
+            <input class="input" type="text" id="topic" placeholder="e.g. Causes of WWII"
+              value="Newton's Laws of Motion"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);" />
+          </div>
+
+          <!-- Learning Objectives -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Learning
+              Objectives</label>
+            <textarea class="textarea" id="objectives" rows="3" placeholder="What should students learn?"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main); resize:vertical;">Understand the three classical laws of motion, compute basic kinematics equations, and understand forces like gravity and friction.</textarea>
+          </div>
+
+          <!-- Assignment Features (Checkboxes) -->
+          <div style="margin-top:8px;">
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:12px; display:block; color:var(--text-secondary); font-weight:600;">Assignment
+              Features</label>
+            <div
+              style="background:var(--surface-50); border:1px solid var(--surface-200); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includeRubric"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Include Rubric
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includeInstructions"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Student Instructions
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includeScaffoldedSupport"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Scaffolded Support
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="requireResearch"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Research Required
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includeReflection"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Student Reflection
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="multipleVersions"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Multiple Versions
+              </label>
             </div>
           </div>
-        </div>
 
-        <div class="form-section text-center">
-          <button type="submit" class="btn-purple">Generate Assignment</button>
-          <div id="loader" class="loader" style="margin-top: 12px;"></div>
-          <div id="assignment-output" style="margin-top: 16px;"></div>
-        </div>
-      </form>
+          <!-- Generate Button -->
+          <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--surface-200);">
+            <button type="submit" id="generate-btn" class="btn shadow-lg hover-lift"
+              style="width:100%; padding:14px; border-radius:12px; display:flex; justify-content:center; align-items:center; gap:8px; font-size:0.95rem; background:var(--brand-primary); color:white; border:none; font-weight:bold;">
+              Generate Assignment
+            </button>
+            <div id="loader" class="hidden"
+              style="text-align:center; font-size:0.8rem; color:var(--brand-primary); margin-top:12px; font-weight:600;">
+              <i class="ph ph-spinner-gap animate-spin" style="margin-right:6px;"></i> Generating (~12s)...
+            </div>
+            <div id="time-est"
+              style="text-align:center; font-size:0.7rem; color:var(--text-muted); margin-top:12px; font-weight:500;">
+              Est. generation time: ~12 seconds.
+            </div>
+          </div>
+        </form>
+      </div>
     </div>
-  </section>
 
+    <!-- RESIZER -->
+    <div class="resizer" id="dragMe"></div>
+
+    <!-- RIGHT PANEL: Document Preview -->
+    <div class="right-panel"
+      style="flex:1; display:flex; flex-direction:column; background:var(--surface-100); overflow:hidden; position:relative;">
+
+      <!-- Top Bar (Mac-like Toolbar) -->
+      <div class="top-bar"
+        style="height:64px; min-height:64px; background:white; border-bottom:1px solid var(--surface-200); display:flex; align-items:center; justify-content:space-between; padding:0 24px;">
+
+        <!-- Left side: Status badge -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div
+            style="display:flex; align-items:center; gap:6px; background:rgba(16, 185, 129, 0.1); color:var(--accent-success); padding:6px 12px; border-radius:var(--radius-pill); font-size:0.75rem; font-weight:600;">
+            <div style="width:6px; height:6px; background:currentcolor; border-radius:50%;"></div>
+            System Operational
+          </div>
+        </div>
+
+        <!-- Center: Doc Meta (Visible when generated) -->
+        <div id="preview-meta" class="hidden"
+          style="display:flex; align-items:center; gap:16px; flex:1; justify-content:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-file-doc" style="color:#A78BFA; font-size:1.2rem;"></i>
+            <span id="doc-title-display"
+              style="font-weight:600; font-size:0.9rem; color:var(--text-main);">Physics_101_Newton.docx</span>
+          </div>
+          <div style="width:1px; height:16px; background:var(--surface-200);"></div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">
+            Last edited just now
+          </div>
+        </div>
+
+        <!-- Right side: Actions -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="btn btn-ghost" style="padding:6px; color:var(--text-secondary);"><i class="ph ph-copy"
+              style="font-size:1.1rem;"></i></button>
+          <button class="btn btn-ghost" style="padding:6px; color:var(--text-secondary);"><i
+              class="ph ph-bookmark-simple" style="font-size:1.1rem;"></i></button>
+          <button id="export-pdf-btn" class="btn"
+            style="background:var(--text-main); color:white; border-radius:var(--radius-pill); font-weight:600; font-size:0.8rem; padding:8px 16px; display:flex; gap:6px; pointer-events:none; opacity:0.5; border:none; cursor:pointer;">
+            <i class="ph ph-printer"></i> Print / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Document Viewing Area -->
+      <div id="doc-scroll-area"
+        style="flex:1; overflow-y:auto; padding:40px; display:flex; justify-content:center; align-items:flex-start;">
+
+        <!-- Empty State -->
+        <div id="preview-empty"
+          style="text-align:center; color:var(--text-muted); align-self:center; margin-top:-10vh;">
+          <div
+            style="width:80px; height:80px; border-radius:50%; background:var(--surface-200); display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <i class="ph ph-file-dashed" style="font-size:2.5rem; color:var(--text-secondary);"></i>
+          </div>
+          <h3 style="color:var(--text-main); font-weight:600; font-size:1.1rem; margin-bottom:8px;">No Assignment
+            Generated</h3>
+          <p style="font-size:0.9rem; max-width:300px; line-height:1.5;">Configure your parameters on the left and click
+            Generate to create a custom assignment.</p>
+        </div>
+
+        <!-- The Document Page -->
+        <div id="preview-card" class="hidden hover-lift"
+          style="width:100%; max-width:850px; min-height:1056px; background:white; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.08); position:relative; overflow:hidden;">
+          <!-- Top Brand Decoration -->
+          <div style="height:6px; width:100%; max-width:100%; background:#4F46E5; border-radius:12px 12px 0 0;">
+          </div>
+
+          <!-- Content Injection Container -->
+          <div id="doc-content"
+            style="padding:60px 80px; font-family:'Inter', sans-serif; color:var(--text-main); line-height:1.7;">
+            <!-- Assignment Header Profile (Generated Dynamically) -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- LOGIC -->
   <script>
+    // Markdown Parser (Basic with Tables & Pretty Details)
+    function parseMarkdownToHTML(text) {
+      if (!text) return '';
+      let html = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^#\s+(.*$)/gm, '<h1 style="font-size:1.8rem; font-weight:800; margin-bottom:16px; color:var(--text-main);">$1</h1>')
+        .replace(/^##\s+(.*$)/gm, '<h2 style="font-size:1.4rem; font-weight:700; margin:32px 0 16px 0; color:var(--text-main); border-bottom:1px solid var(--surface-200); padding-bottom:8px;">$1</h2>')
+
+      // Special Handling for numbered sections (e.g. "### 1 Multiple Choice")
+      html = html.replace(/^###\s+(?:(\d+)[\.\)]?)?\s*(.*$)/gm, (match, num, title) => {
+        if (num) {
+          return `<h3 style="display:flex; align-items:center; gap:12px; font-size:1.2rem; font-weight:700; margin:32px 0 16px 0; color:var(--text-main);">
+                      <div style="width:28px; height:28px; border-radius:50%; background:#EFF6FF; color:#1D4ED8; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">${num}</div>
+                      ${title}
+                    </h3>`;
+        }
+        return `<h3 style="font-size:1.2rem; font-weight:700; margin:24px 0 12px 0; color:var(--text-main);">${match.replace('###', '').trim()}</h3>`;
+      });
+
+      html = html.replace(/^- (.*$)/gm, '<li style="margin-bottom:8px;">$1</li>');
+
+      // Special styling for multiple choice options (A. B. C. D.)
+      html = html.replace(/^([A-E])\. (.*$)/gm, '<div style="margin-left:24px; margin-bottom:8px; display:flex; gap:8px;"><span style="font-weight:600; color:var(--text-secondary);">$1.</span> <span>$2</span></div>');
+
+      // Table Regex Magic
+      // Find table blocks (lines starting with |)
+      const tableRegex = /((?:\|.*\|\n)+)/g;
+      html = html.replace(tableRegex, (match) => {
+        let rows = match.trim().split('\n');
+        let tableHtml = '<div style="overflow-x:auto; margin:24px 0;"><table style="width:100%; border-collapse:collapse; font-size:0.9rem; text-align:left;">';
+
+        rows.forEach((row, i) => {
+          // Skip the separator row like |---|---|
+          if (row.match(/^\|[-|: ]+\|$/)) return;
+
+          let cols = row.split('|').slice(1, -1).map(c => c.trim());
+          let tag = i === 0 ? 'th' : 'td';
+          let style = i === 0 ? 'padding:12px 16px; border-bottom:2px solid var(--surface-200); background:var(--surface-50); font-weight:700;' : 'padding:12px 16px; border-bottom:1px solid var(--surface-200);';
+
+          tableHtml += '<tr>' + cols.map(c => `<${tag} style="${style}">${c}</${tag}>`).join('') + '</tr>';
+        });
+
+        tableHtml += '</table></div>';
+        return tableHtml;
+      });
+
+      html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+
+      // Wrap lists generically, being careful not to match tables
+      html = html.replace(/(<li.*<\/li>)/s, '<ul style="padding-left:24px; margin-bottom:16px;">$1</ul>');
+      return html;
+    }
+
     document.getElementById('assignment-form').addEventListener('submit', async function (e) {
       e.preventDefault();
 
@@ -101,92 +432,170 @@
       const topic = document.getElementById('topic').value.trim();
       const objectives = document.getElementById('objectives').value.trim();
 
+      if (!subject || !grade || !unit || !topic) {
+        alert("Please ensure Subject, Grade Level, Unit Title, and Assignment Topic are all filled out.");
+        return;
+      }
+
       const form = e.target;
       const checkboxes = form.querySelectorAll('input[type="checkbox"]');
       const options = {};
       checkboxes.forEach(cb => options[cb.name] = cb.checked);
 
+      const generateBtn = document.getElementById('generate-btn');
       const loader = document.getElementById('loader');
-      const output = document.getElementById('assignment-output');
-      output.innerHTML = '';
-      loader.style.display = 'block';
+      const timeEst = document.getElementById('time-est');
+      const previewEmpty = document.getElementById('preview-empty');
+      const previewCard = document.getElementById('preview-card');
+      const previewMeta = document.getElementById('preview-meta');
+      const exportBtn = document.getElementById('export-pdf-btn');
+      const docContent = document.getElementById('doc-content');
+
+      // Update UI for loading
+      generateBtn.style.display = 'none';
+      timeEst.style.display = 'none';
+      loader.classList.remove('hidden');
+
+      previewEmpty.classList.remove('hidden');
+      previewCard.classList.add('hidden');
+      previewMeta.classList.add('hidden');
+      exportBtn.style.pointerEvents = 'none';
+      exportBtn.style.opacity = '0.5';
+      exportBtn.classList.remove('hover-lift');
 
       try {
-        const response = await fetch('https://smartassessbackend-99pu.onrender.com/assignment', {
+        const payload = {
+          subject,
+          grade,
+          unit,
+          topic,
+          objectives,
+          ...options
+        };
+
+        const response = await fetch(`${window.API_CONFIG.GRADING_BASE_URL}/assignment`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            subject,
-            grade,
-            unit,
-            topic,
-            objectives,
-            ...options
-          })
+          body: JSON.stringify(payload)
         });
 
         const data = await response.json();
-        loader.style.display = 'none';
 
-        if (data.success && data.pdfUrl) {
-          const link = document.createElement('a');
-          link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
-          link.target = '_blank';
-          link.textContent = '📄 Download Assignment PDF';
-          link.style.display = 'inline-block';
-          link.style.fontWeight = '500';
-          link.style.color = '#6246ea';
-          link.style.textDecoration = 'none';
-          output.appendChild(link);
+        // Reset UI
+        loader.classList.add('hidden');
+        generateBtn.style.display = 'flex';
+        timeEst.style.display = 'block';
+
+        if (data.success && data.result) {
+          // Show Document
+          previewEmpty.classList.add('hidden');
+          previewCard.classList.remove('hidden');
+          previewMeta.classList.remove('hidden');
+
+          document.getElementById('doc-title-display').innerText = `${subject}_${grade}Grade_Assignment.docx`.replace(/\s+/g, '');
+
+          const customHeader = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 2px solid var(--surface-100);">
+              <div>
+                 <h1 style="font-size:2.4rem; font-weight:800; color:#111827; margin:0 0 16px 0; line-height:1.1; letter-spacing:-0.02em;">
+                   Assignment: ${topic}
+                 </h1>
+                 <div style="display:flex; gap:16px; font-size:0.95rem; color:#6B7280; font-weight:500;">
+                   <span>Subject: ${subject}</span> &bull; <span>Grade: ${grade}th</span> &bull; <span>Est. Time: 45 mins</span>
+                 </div>
+              </div>
+              <div style="background:#F8FAFC; padding:12px 24px; border-radius:16px; text-align:center; min-width:120px;">
+                 <div style="font-size:0.75rem; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Total Points</div>
+                 <div style="font-size:1.8rem; font-weight:800; color:#3B82F6;">100 pts</div>
+              </div>
+            </div>
+          `;
+          docContent.innerHTML = customHeader + parseMarkdownToHTML(data.result);
+
+          exportBtn.style.pointerEvents = 'auto';
+          exportBtn.style.opacity = '1';
+          exportBtn.classList.add('hover-lift');
+
         } else {
-          output.textContent = '❌ Something went wrong. Please try again.';
-          output.style.color = 'red';
+          alert('Error generating assignment: ' + (data.message || 'Unknown error'));
         }
       } catch (err) {
-        loader.style.display = 'none';
-        output.textContent = '⚠️ Error connecting to the server.';
-        output.style.color = 'red';
+        loader.classList.add('hidden');
+        generateBtn.style.display = 'flex';
+        timeEst.style.display = 'block';
+        alert('Connection Error while generating assignment.');
         console.error(err);
       }
     });
+
+    // Native Browser Print Logic
+    document.getElementById('export-pdf-btn').addEventListener('click', function (e) {
+      e.preventDefault();
+      window.print();
+    });
+
+    // Sidebar Toggle
+    document.getElementById('sidebar-toggle').addEventListener('click', function () {
+      document.querySelector('.app-sidebar').classList.toggle('collapsed');
+    });
+
+    // Panel Resizer Logic
+    const leftPanel = document.querySelector('.left-panel');
+    const resizer = document.getElementById('dragMe');
+
+    if (leftPanel && resizer) {
+      let x = 0;
+      let w = 0;
+
+      const mouseDownHandler = function (e) {
+        x = e.clientX;
+        const styles = window.getComputedStyle(leftPanel);
+        w = parseInt(styles.width, 10);
+
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+        resizer.classList.add('resizing');
+        document.body.style.cursor = 'col-resize';
+        leftPanel.style.userSelect = 'none';
+        leftPanel.style.pointerEvents = 'none';
+        document.querySelector('.right-panel').style.pointerEvents = 'none'; // Prevent text selection in preview
+      };
+
+      const mouseMoveHandler = function (e) {
+        const dx = e.clientX - x;
+        let newWidth = w + dx;
+        if (newWidth < 300) newWidth = 300;
+        if (newWidth > window.innerWidth - 300) newWidth = window.innerWidth - 300;
+        leftPanel.style.width = `${newWidth}px`;
+      };
+
+      const mouseUpHandler = function () {
+        resizer.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+        leftPanel.style.userSelect = '';
+        leftPanel.style.pointerEvents = '';
+        document.querySelector('.right-panel').style.pointerEvents = '';
+      };
+
+      resizer.addEventListener('mousedown', mouseDownHandler);
+    }
   </script>
   <script>
-    (function propagateHash() {
-      const currentHash = window.location.hash;           // e.g. "#name=Huda&email=..."
-      if (!currentHash) return;
-  
-      // 1) Rewrite all same-origin links to carry the current hash
-      document.querySelectorAll('a[href]').forEach(a => {
-        const href = a.getAttribute('href');
-        if (!href) return;
-        // Skip absolute external links, mailto, tel, and pure hash anchors
-        if (/^(https?:|mailto:|tel:)/i.test(href) || href.startsWith('#')) return;
-  
-        // If link already has a hash, append as &…; else add the current hash
-        const newHref = href.includes('#')
-          ? href + '&' + currentHash.slice(1)
-          : href + currentHash;
-        a.setAttribute('href', newHref);
-      });
-  
-      // 2) Patch inline button navigations like: onclick="window.location.href='page.html'"
-      document.querySelectorAll('[onclick*="window.location.href"]').forEach(el => {
-        const m = el.getAttribute('onclick').match(/window\.location\.href\s*=\s*'([^']+)'/);
-        if (!m) return;
-        const url = m[1];
-        const newUrl = url.includes('#')
-          ? url + '&' + currentHash.slice(1)
-          : url + currentHash;
-        el.setAttribute('onclick', `window.location.href='${newUrl}'`);
-      });
-  
-      // 3) Optional helper for future use: <button onclick="navWithHash('lessonplan.html')">
-      window.navWithHash = function (url) {
-        const h = window.location.hash;
-        window.location.href = url + (url.includes('#') ? '&' + h.slice(1) : h);
-      };
-    })();
+    document.addEventListener('DOMContentLoaded', () => {
+      const userJson = localStorage.getItem('smartassessUser');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          const nameEl = document.getElementById('sidebar-user-name');
+          if (nameEl && user.name) nameEl.textContent = user.name;
+        } catch (err) {
+          console.error("Failed to parse user session", err);
+        }
+      }
+    });
   </script>
-  
 </body>
+
 </html>

@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Assess - Roster Management</title>
+
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link rel="icon" href="logo.svg" type="image/svg+xml" />
+    <script src="config.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#4F46E5",
+                        "primary-hover": "#4338CA",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "accent-teal": "#10B981",
+                        "neutral-surface": "#ffffff",
+                        "dark-surface": "#1a2430",
+                    },
+                    fontFamily: {
+                        "sans": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbar for modern feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .app-main {
+            flex: 1;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 0;
+            background-color: var(--surface-100);
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+        }
+
+        /* Modals are styled in style.css */
+
+        .classroom-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .classroom-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .classroom-card.active {
+            border-color: #4F46E5;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+
+<body class="font-sans text-slate-800 flex bg-slate-50">
+
+    <!-- Loading Overlay -->
+    <div id="loader-overlay" style="display: none;">
+        <i class="ph ph-spinner-gap animate-spin text-4xl text-primary mb-4"></i>
+        <h3 class="text-xl font-semibold">Loading Roster Data</h3>
+    </div>
+
+    <!-- SIDEBAR (Standardized) -->
+    <aside class="app-sidebar" style="z-index: 50;">
+        <div class="sidebar-header">
+            <img src="logo.svg" alt="Logo" class="sidebar-logo" />
+        </div>
+
+        <nav class="nav-links">
+            <div class="nav-category">Main</div>
+
+            <a href="home.html" class="nav-item">
+                <i class="ph ph-graduation-cap nav-icon"></i><span>Grader</span>
+            </a>
+
+            <a href="AssignmentGenerator.html" class="nav-item">
+                <i class="ph ph-files nav-icon"></i>
+                <span>Assignments</span>
+            </a>
+
+            <a href="lessonplan.html" class="nav-item">
+                <i class="ph ph-chalkboard-teacher nav-icon"></i>
+                <span>Lesson Plans</span>
+            </a>
+
+            <a href="DataAnalyzer.html" class="nav-item">
+                <i class="ph ph-chart-bar nav-icon"></i>
+                <span>Data Analyzer</span>
+            </a>
+
+            <div class="nav-category">Library</div>
+            <!-- <a href="#" class="nav-item">
+                <i class="ph ph-folder nav-icon"></i>
+                <span>My Content</span>
+            </a> -->
+            <a href="roster.html" class="nav-item active">
+                <i class="ph ph-users nav-icon"></i>
+                <span>Student Roster</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div class="avatar"
+                    style="width:36px; height:36px; border-radius:10px; background:var(--brand-surface); display:flex; align-items:center; justify-content:center; color:var(--brand-primary); font-weight:bold;">
+                    T
+                </div>
+                <div style="flex:1;">
+                    <div id="sidebar-user-name" style="font-weight:600; font-size:0.9rem; color:var(--text-main);">
+                        Teacher</div>
+                </div>
+                <button onclick="localStorage.clear(); window.location.href='index.html'" class="btn-ghost"
+                    title="Sign Out" style="padding:4px; margin-left: auto;">
+                    <i class="ph ph-sign-out" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="app-main p-8 bg-slate-50 relative">
+
+        <!-- Top Header row: Title + Actions -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1
+                    style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+                    <div
+                        style="width: 40px; height: 40px; background: var(--brand-surface); color: var(--brand-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                        <i class="ph ph-users" style="font-size: 1.5rem;"></i>
+                    </div>
+                    Roster Management
+                </h1>
+                <p class="text-slate-500 text-sm">Manage your classrooms and student performance data.</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="Search roster..."
+                        class="pl-9 pr-4 py-2 border border-slate-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-64 bg-white" />
+                </div>
+                <button type="button" onclick="openClassroomModal()"
+                    class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-full text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors shadow-sm">
+                    <i class="ph ph-plus font-bold"></i> Add Classroom
+                </button>
+            </div>
+        </div>
+
+        <!-- Active Classrooms Section -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-slate-900">Active Classrooms</h2>
+                <a href="#" class="text-sm font-medium text-primary hover:underline">View all</a>
+            </div>
+
+            <!-- Classrooms Container -->
+            <div id="classrooms-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Rendered via JS -->
+            </div>
+        </div>
+
+        <!-- Student Roster Section -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900">Student Roster — <span
+                            id="active-classroom-name">Select a Classroom</span></h2>
+                    <p class="text-slate-500 text-sm">Manage student profiles, performance trends, and ELL status.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button
+                        class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        <i class="ph ph-faders"></i> Filter
+                    </button>
+                    <button
+                        class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">
+                        <i class="ph ph-download-simple"></i> Export CSV
+                    </button>
+                    <button type="button" onclick="openStudentModal()"
+                        class="flex items-center gap-2 px-4 py-1.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover shadow-sm"
+                        id="btn-add-student">
+                        <i class="ph ph-plus"></i> Add Student
+                    </button>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr
+                            class="border-b border-slate-100 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                            <th class="pb-3 pl-2">Student Name</th>
+                            <th class="pb-3">Student ID</th>
+                            <th class="pb-3">ELL Status</th>
+                            <th class="pb-3 w-48">Performance</th>
+                            <th class="pb-3">Trend</th>
+                            <th class="pb-3 text-right pr-2">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="students-table-body" class="text-sm text-slate-700">
+                        <!-- Rendered via JS -->
+                        <tr>
+                            <td colspan="6" class="py-12 text-center text-slate-500">
+                                Select a classroom to view its roster.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Classroom Modal Redesign -->
+    <div id="classroom-modal" class="modal-overlay">
+        <div
+            class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl overflow-hidden transform transition-all relative flex flex-col max-h-[90vh]">
+            <button onclick="closeClassroomModal()"
+                class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 z-10 transition-colors">
+                <i class="ph ph-x text-2xl"></i>
+            </button>
+
+            <div class="p-10 overflow-y-auto">
+                <div class="mb-8">
+                    <div
+                        class="flex items-center justify-between text-xs font-bold text-primary mb-3 uppercase tracking-wider">
+                        <span>Step 1 of 1</span>
+                        <span class="text-slate-400 font-medium">Classroom Info</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-1.5 mb-8">
+                        <div class="bg-primary h-1.5 rounded-full" style="width: 100%"></div>
+                    </div>
+
+                    <h2 class="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Tell us about your classroom</h2>
+                    <p class="text-slate-500 text-[15px] leading-relaxed max-w-xl">
+                        Personalizing your AI assistant starts here. We'll use this to tailor lesson plans and content
+                        generation to your students' level.
+                    </p>
+                </div>
+
+                <form id="form-add-classroom" class="space-y-8">
+                    <!-- 1. Grade Levels -->
+                    <div>
+                        <label class="block font-semibold text-slate-900 mb-1">What grade levels do you teach? <span
+                                class="text-slate-400 font-normal text-sm ml-1">(Select one)</span></label>
+                        <div class="flex flex-wrap gap-2.5 mt-4">
+                            <!-- Grades 1 to 12 -->
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="1">1</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="2">2</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="3">3</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="4">4</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="5">5</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="6">6</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="7">7</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="8">8</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="9">9</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="10">10</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="11">11</button>
+                            <button type="button"
+                                class="grade-pill w-10 h-10 rounded-full border border-slate-200 text-sm font-medium text-slate-600 hover:border-primary hover:text-primary transition-colors focus:outline-none flex items-center justify-center shrink-0"
+                                data-value="12">12</button>
+                        </div>
+                        <input type="hidden" id="cr-grade">
+                    </div>
+
+                    <!-- 2. Subject Area -->
+                    <div>
+                        <label class="block font-semibold text-slate-900 mb-1">What is your primary subject
+                            area?</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                            <button type="button"
+                                class="subject-card flex items-center p-4 border border-slate-200 rounded-2xl text-left hover:border-primary hover:shadow-sm transition-all focus:outline-none group relative overflow-hidden"
+                                data-value="STEM">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mr-4 group-hover:bg-blue-100 transition-colors shrink-0">
+                                    <i class="ph ph-atom text-2xl"></i>
+                                </div>
+                                <span
+                                    class="font-semibold text-slate-700 group-hover:text-primary text-[15px]">STEM</span>
+                                <div
+                                    class="absolute right-4 opacity-0 group-[.selected]:opacity-100 text-primary transition-opacity">
+                                    <i class="ph-fill ph-check-circle text-xl"></i>
+                                </div>
+                            </button>
+                            <button type="button"
+                                class="subject-card flex items-center p-4 border border-slate-200 rounded-2xl text-left hover:border-primary hover:shadow-sm transition-all focus:outline-none group relative overflow-hidden"
+                                data-value="Humanities">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mr-4 group-hover:bg-purple-100 transition-colors shrink-0">
+                                    <i class="ph ph-books text-2xl"></i>
+                                </div>
+                                <span
+                                    class="font-semibold text-slate-700 group-hover:text-primary text-[15px]">Humanities</span>
+                                <div
+                                    class="absolute right-4 opacity-0 group-[.selected]:opacity-100 text-primary transition-opacity">
+                                    <i class="ph-fill ph-check-circle text-xl"></i>
+                                </div>
+                            </button>
+                            <button type="button"
+                                class="subject-card flex items-center p-4 border border-slate-200 rounded-2xl text-left hover:border-primary hover:shadow-sm transition-all focus:outline-none group relative overflow-hidden"
+                                data-value="Arts">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center mr-4 group-hover:bg-orange-100 transition-colors shrink-0">
+                                    <i class="ph ph-palette text-2xl"></i>
+                                </div>
+                                <span
+                                    class="font-semibold text-slate-700 group-hover:text-primary text-[15px]">Arts</span>
+                                <div
+                                    class="absolute right-4 opacity-0 group-[.selected]:opacity-100 text-primary transition-opacity">
+                                    <i class="ph-fill ph-check-circle text-xl"></i>
+                                </div>
+                            </button>
+                            <button type="button"
+                                class="subject-card flex items-center p-4 border border-slate-200 rounded-2xl text-left hover:border-primary hover:shadow-sm transition-all focus:outline-none group relative overflow-hidden"
+                                data-value="Languages">
+                                <div
+                                    class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mr-4 group-hover:bg-emerald-100 transition-colors shrink-0">
+                                    <i class="ph ph-translate text-2xl"></i>
+                                </div>
+                                <span
+                                    class="font-semibold text-slate-700 group-hover:text-primary text-[15px]">Languages</span>
+                                <div
+                                    class="absolute right-4 opacity-0 group-[.selected]:opacity-100 text-primary transition-opacity">
+                                    <i class="ph-fill ph-check-circle text-xl"></i>
+                                </div>
+                            </button>
+                        </div>
+                        <input type="hidden" id="cr-subject">
+                    </div>
+
+                    <!-- 3. Name and Age Group -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-100">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Classroom Name</label>
+                            <input type="text" id="cr-name" required placeholder="e.g. Algebra II - Section A"
+                                class="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-2">Age Group</label>
+                            <input type="text" id="cr-age" required placeholder="e.g. 14-15"
+                                class="w-full border border-slate-300 rounded-xl px-4 py-3 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-slate-900" />
+                        </div>
+                    </div>
+
+                    <div class="pt-8 flex items-center justify-between border-t border-slate-100 mt-8">
+                        <button type="button" onclick="closeClassroomModal()"
+                            class="text-[15px] font-semibold text-slate-500 hover:text-slate-800 transition-colors focus:outline-none">Skip
+                            for now</button>
+                        <button type="submit"
+                            class="flex items-center gap-2 px-8 py-3.5 bg-primary text-white text-[15px] font-semibold rounded-full hover:bg-primary-hover transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-primary/30">
+                            Next Step <i class="ph ph-arrow-right font-bold"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="student-modal" class="modal-overlay">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Add New Student</h3>
+                <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+
+            <form id="form-add-student" class="space-y-4">
+                <!-- Hidden classroom Id field -->
+                <input type="hidden" id="st-classroomId" />
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Student Name</label>
+                    <input type="text" id="st-name" required placeholder="e.g. Elena Rodriguez"
+                        class="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
+                </div>
+                <div class="flex items-center gap-2 mt-4">
+                    <input type="checkbox" id="st-ell"
+                        class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary" />
+                    <label for="st-ell" class="text-sm font-medium text-slate-700">English Language Learner
+                        (ELL)</label>
+                </div>
+
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeStudentModal()"
+                        class="px-4 py-2 border border-slate-200 text-slate-600 font-medium rounded-lg hover:bg-slate-50">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover">Add
+                        Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add to Class(es) Modal -->
+    <div id="modal-add-to-class" class="modal-overlay">
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Add <span id="add-to-class-student-name">Student</span>
+                </h3>
+                <button onclick="closeAddClassModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Select additional classrooms for this student.</p>
+            <form id="form-add-to-class" class="space-y-4">
+                <input type="hidden" id="add-to-class-student-id" />
+                <input type="hidden" id="add-to-class-student-classrooms" />
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Classroom(s)</label>
+                    <div id="add-to-class-list"
+                        class="space-y-2 max-h-48 overflow-y-auto border border-slate-200 rounded-lg p-3">
+                        <!-- Checkboxes rendered via JS -->
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeAddClassModal()"
+                        class="flex-1 py-2 text-slate-600 font-medium hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-sm">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Move Class Modal -->
+    <div id="modal-move-class" class="modal-overlay">
+        <div
+            class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden transform transition-all p-6 relative">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Move <span id="move-class-student-name">Student</span></h3>
+                <button onclick="closeMoveClassModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+            <p class="text-sm text-slate-500 mb-4">Transfer this student from the current classroom to a different one.
+            </p>
+            <form id="form-move-class" class="space-y-4">
+                <input type="hidden" id="move-class-student-id" />
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Destination Classroom</label>
+                    <select id="move-to-classroom-select" required
+                        class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                        <option value="">Select Classroom...</option>
+                        <!-- Options rendered via JS -->
+                    </select>
+                </div>
+                <div class="flex items-center gap-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeMoveClassModal()"
+                        class="flex-1 py-2 text-slate-600 font-medium hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors">Cancel</button>
+                    <button type="submit"
+                        class="flex-1 py-2 bg-primary text-white font-medium rounded-lg hover:bg-primary-hover transition-colors shadow-sm">Move
+                        Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loader Overlay -->
+    <div id="loader-overlay"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] hidden items-center justify-center">
+        <div class="bg-white rounded-2xl p-6 flex flex-col items-center gap-4 shadow-xl">
+            <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            <h3 class="font-bold text-slate-900">Loading...</h3>
+        </div>
+    </div>
+
+    <script>
+        let activeClassroomId = null;
+        let authHeaders = {};
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            authHeaders = {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            };
+
+            // Load User info
+            try {
+                const userInfoStr = localStorage.getItem('user_info');
+                if (userInfoStr) {
+                    const u = JSON.parse(userInfoStr);
+                    if (u.company) document.getElementById('sidebar-user-company').textContent = u.company;
+                }
+            } catch (e) { }
+
+            await loadClassrooms();
+        });
+
+        // === MODAL LOGIC ===
+        function openClassroomModal() {
+            document.getElementById('classroom-modal').classList.add('show');
+        }
+        function closeClassroomModal() {
+            document.getElementById('classroom-modal').classList.remove('show');
+            document.getElementById('form-add-classroom').reset();
+
+            // Reset pills and cards
+            document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('bg-primary', 'text-white', 'border-primary', 'font-bold'));
+            document.querySelectorAll('.grade-pill').forEach(p => p.classList.add('text-slate-600', 'border-slate-200'));
+            document.querySelectorAll('.subject-card').forEach(c => c.classList.remove('border-primary', 'ring-1', 'ring-primary', 'bg-blue-50/50', 'selected'));
+            document.getElementById('cr-grade').value = "";
+            document.getElementById('cr-subject').value = "";
+        }
+
+        // Initialize Pill & Card Listeners (Added immediately after script load)
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.grade-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.grade-pill').forEach(p => p.classList.remove('bg-primary', 'text-white', 'border-primary', 'font-bold'));
+                    document.querySelectorAll('.grade-pill').forEach(p => p.classList.add('text-slate-600', 'border-slate-200'));
+
+                    pill.classList.remove('text-slate-600', 'border-slate-200');
+                    pill.classList.add('bg-primary', 'text-white', 'border-primary', 'font-bold');
+
+                    document.getElementById('cr-grade').value = pill.dataset.value;
+                });
+            });
+
+            document.querySelectorAll('.subject-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.subject-card').forEach(c => c.classList.remove('border-primary', 'ring-1', 'ring-primary', 'bg-blue-50/50', 'selected'));
+
+                    card.classList.add('border-primary', 'ring-1', 'ring-primary', 'bg-blue-50/50', 'selected');
+
+                    document.getElementById('cr-subject').value = card.dataset.value;
+                });
+            });
+        });
+
+        function openStudentModal() {
+            try {
+                if (!activeClassroomId) {
+                    alert("Please select a classroom from the cards above first!");
+                    return;
+                }
+                document.getElementById('st-classroomId').value = activeClassroomId;
+                document.getElementById('student-modal').classList.add('show');
+                document.getElementById('student-modal').style.display = 'flex';
+                document.getElementById('student-modal').style.opacity = '1';
+                document.getElementById('student-modal').style.zIndex = '99999';
+            } catch (e) {
+                alert("Error opening modal: " + e.message);
+            }
+        }
+        function closeStudentModal() {
+            document.getElementById('student-modal').classList.remove('show');
+            document.getElementById('student-modal').style.display = 'none';
+            document.getElementById('form-add-student').reset();
+        }
+
+        const colors = ["bg-blue-100 text-blue-600", "bg-emerald-100 text-emerald-600", "bg-orange-100 text-orange-600", "bg-purple-100 text-purple-600"];
+        const icons = ["ph-sigma", "ph-flask", "ph-globe-hemisphere-west", "ph-book-open"];
+
+        const subjectMap = {
+            "STEM": { color: "bg-blue-100 text-blue-600", icon: "ph-atom" },
+            "Humanities": { color: "bg-purple-100 text-purple-600", icon: "ph-books" },
+            "Arts": { color: "bg-orange-100 text-orange-600", icon: "ph-palette" },
+            "Languages": { color: "bg-emerald-100 text-emerald-600", icon: "ph-translate" }
+        };
+
+        // === LOAD DATA ===
+        async function loadClassrooms() {
+            try {
+                showLoader("Loading Classrooms...");
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/classrooms`, { headers: authHeaders });
+                const data = await res.json();
+
+                const container = document.getElementById('classrooms-container');
+                container.innerHTML = '';
+
+                if (data.success && data.classrooms.length > 0) {
+                    data.classrooms.forEach((cr, index) => {
+                        let colorClass = colors[index % colors.length];
+                        let iconClass = icons[index % icons.length];
+
+                        if (cr.subject && subjectMap[cr.subject]) {
+                            colorClass = subjectMap[cr.subject].color;
+                            iconClass = subjectMap[cr.subject].icon;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = `classroom-card bg-white border border-slate-200 rounded-xl p-5 flex flex-col`;
+                        card.onclick = () => selectClassroom(cr._id, cr.name, card);
+                        card.dataset.id = cr._id;
+
+                        // Header (Icon + Optional check)
+                        card.innerHTML = `
+              <div class="flex items-start justify-between mb-4">
+                <div class="w-10 h-10 ${colorClass.split(' ')[0]} rounded-xl flex items-center justify-center">
+                  <i class="ph ${iconClass} ${colorClass.split(' ')[1]} text-xl font-bold"></i>
+                </div>
+                <div class="check-icon hidden text-primary"><i class="ph-fill ph-check-circle text-xl"></i></div>
+              </div>
+              <h3 class="font-bold text-slate-900 mb-1">${cr.name}</h3>
+              <p class="text-xs text-slate-500 mb-4">${cr.gradeLevel} • ${cr.subject}</p>
+              
+              <div class="mt-auto flex items-center gap-2">
+                <span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded">${cr.students ? cr.students.length : 0} Students</span>
+              </div>
+            `;
+                        container.appendChild(card);
+                    });
+
+                    // Auto-select first classroom
+                    const firstCard = container.querySelector('.classroom-card');
+                    if (firstCard) {
+                        selectClassroom(data.classrooms[0]._id, data.classrooms[0].name, firstCard);
+                    }
+                } else {
+                    container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 border border-dashed rounded-xl">No classrooms found. Add one to get started!</div>`;
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        async function selectClassroom(id, name, cardElem) {
+            activeClassroomId = id;
+            document.getElementById('active-classroom-name').textContent = name;
+            document.getElementById('btn-add-student').disabled = false;
+
+            // Update UI active state
+            document.querySelectorAll('.classroom-card').forEach(c => {
+                c.classList.remove('active', 'border-primary');
+                c.querySelector('.check-icon').classList.add('hidden');
+            });
+            cardElem.classList.add('active', 'border-primary');
+            cardElem.querySelector('.check-icon').classList.remove('hidden');
+
+            await loadStudentsForClassroom(id);
+        }
+
+        async function loadStudentsForClassroom(classroomId) {
+            try {
+                showLoader("Loading Roster...");
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/students/classroom/${classroomId}`, { headers: authHeaders });
+                const data = await res.json();
+
+                const tbody = document.getElementById('students-table-body');
+                tbody.innerHTML = '';
+
+                if (data.success && data.students.length > 0) {
+                    data.students.forEach(st => {
+                        // Generate random avatar background
+                        const bgColors = ['bg-orange-200', 'bg-blue-200', 'bg-emerald-200', 'bg-purple-200', 'bg-rose-200'];
+                        const randomBg = bgColors[Math.floor(Math.random() * bgColors.length)];
+                        const initials = st.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                        const dateJoined = new Date(st.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+                        // Ell status UI
+                        const ellBadge = st.ell ? `<span class="px-2 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded">ELL</span>` : `<span class="px-2 py-1 bg-slate-100 text-slate-500 text-[10px] font-bold rounded">NON-ELL</span>`;
+
+                        // Performance handling
+                        let avgDisplay = "--%";
+                        let barWidth = "0%";
+                        let barColor = "bg-slate-200";
+                        let trendIcon = "ph-minus";
+                        let trendColor = "text-slate-400";
+                        let trendText = "No Data";
+
+                        if (st.averageScore !== undefined && st.averageScore !== null) {
+                            const rawAvg = parseFloat(st.averageScore);
+                            const avgDisplayVal = Number.isInteger(rawAvg) ? rawAvg : rawAvg.toFixed(2);
+                            const avg = rawAvg;
+                            avgDisplay = `${avgDisplayVal}%`;
+                            barWidth = `${avg}%`;
+                            barColor = avg >= 90 ? 'bg-emerald-500' : (avg >= 70 ? 'bg-amber-500' : 'bg-rose-500');
+                            trendIcon = avg >= 85 ? 'ph-trend-up' : (avg < 70 ? 'ph-trend-down' : 'ph-arrows-left-right');
+                            trendColor = avg >= 85 ? 'text-emerald-500' : (avg < 70 ? 'text-rose-500' : 'text-amber-500');
+                            trendText = avg >= 85 ? '+2.4%' : (avg < 70 ? '-1.5%' : 'Stable');
+                        }
+
+                        tbody.innerHTML += `
+                 <tr class="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                  <td class="py-3 pl-2">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full ${randomBg} text-slate-700 flex items-center justify-center font-bold text-xs">
+                        ${initials}
+                      </div>
+                      <div>
+                        <div class="font-medium text-slate-900">${st.name}</div>
+                        <div class="text-xs text-slate-400">Joined ${dateJoined}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 text-slate-500">...${st._id.toString().substring(18).toUpperCase()}</td>
+                  <td class="py-3">${ellBadge}</td>
+                  <td class="py-3">
+                    <div class="flex items-center gap-2">
+                       <div class="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full ${barColor}" style="width: ${barWidth}"></div>
+                      </div>
+                      <span class="text-xs font-bold text-slate-700">${avgDisplay}</span>
+                    </div>
+                  </td>
+                  <td class="py-3">
+                    <div class="flex items-center gap-1 ${trendColor} text-xs font-medium">
+                      <i class="ph ${trendIcon}"></i>
+                      <span>${trendText}</span>
+                    </div>
+                  </td>
+                  <td class="py-3 text-right pr-2 relative">
+                    <button class="text-slate-400 hover:text-slate-700" onclick="toggleStudentMenu('${st._id}', event)"><i class="ph ph-dots-three text-lg"></i></button>
+                    <div id="student-menu-${st._id}" class="hidden absolute right-6 top-6 mt-2 w-48 bg-white rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.1)] border border-slate-100 z-50 text-left overflow-hidden">
+                        <button onclick="openAddClassModal('${st._id}', '${st.name.replace(/'/g, "\\'")}', '${JSON.stringify(st.classroomIds || []).replace(/"/g, '&quot;')}')" class="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 border-b border-slate-50 transition-colors flex items-center"><i class="ph ph-plus-circle text-lg mr-3 text-primary"></i>Add to Class(es)</button>
+                        <button onclick="openMoveClassModal('${st._id}', '${st.name.replace(/'/g, "\\'")}', '${JSON.stringify(st.classroomIds || []).replace(/"/g, '&quot;')}')" class="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center"><i class="ph ph-arrow-right text-lg mr-3 text-amber-500"></i>Move to Class</button>
+                    </div>
+                  </td>
+                 </tr>
+               `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="py-12 text-center text-slate-500">No students found in this classroom.</td></tr>`;
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // === FORMS SUBMISSION ===
+        document.getElementById('form-add-classroom').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('cr-name').value;
+            const gradeLevel = document.getElementById('cr-grade').value;
+            const subject = document.getElementById('cr-subject').value;
+            const ageGroup = document.getElementById('cr-age').value;
+
+            if (!gradeLevel) return alert("Please select a grade level representing your students.");
+            if (!subject) return alert("Please select your primary subject area.");
+
+            try {
+                showLoader("Creating Classroom...");
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/classrooms/create`, {
+                    method: 'POST',
+                    headers: authHeaders,
+                    body: JSON.stringify({ name, gradeLevel, subject, ageGroup })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeClassroomModal();
+                    await loadClassrooms(); // refresh
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                hideLoader();
+            }
+        });
+
+        document.getElementById('form-add-student').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('st-name').value;
+            const ell = document.getElementById('st-ell').checked;
+            const classroomId = document.getElementById('st-classroomId').value;
+
+            try {
+                showLoader("Adding Student...");
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/students/create`, {
+                    method: 'POST',
+                    headers: authHeaders,
+                    body: JSON.stringify({ name, ell, classroomId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeStudentModal();
+                    await loadStudentsForClassroom(classroomId); // refresh roster
+                    // Re-fetch classrooms so the student count updates on the card
+                    await loadClassrooms();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                hideLoader();
+            }
+        });
+
+        function showLoader(msg) {
+            document.getElementById('loader-overlay').style.display = 'flex';
+            if (msg) document.querySelector('#loader-overlay h3').textContent = msg;
+        }
+
+        function hideLoader() {
+            document.getElementById('loader-overlay').style.display = 'none';
+        }
+        // === STUDENT MEATBALL MENU & MODALS LOGIC ===
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('td.relative')) {
+                document.querySelectorAll('[id^="student-menu-"]').forEach(menu => menu.classList.add('hidden'));
+            }
+        });
+
+        function toggleStudentMenu(id, event) {
+            event.stopPropagation();
+            document.querySelectorAll('[id^="student-menu-"]').forEach(menu => {
+                if (menu.id !== `student-menu-${id}`) menu.classList.add('hidden');
+            });
+            const targetMenu = document.getElementById(`student-menu-${id}`);
+            if (targetMenu) targetMenu.classList.toggle('hidden');
+        }
+
+        async function openAddClassModal(studentId, studentName, classroomsJson) {
+            document.getElementById('add-to-class-student-id').value = studentId;
+            document.getElementById('add-to-class-student-name').textContent = studentName;
+
+            let currentClassrooms = [];
+            try { currentClassrooms = JSON.parse(classroomsJson); } catch (e) { }
+
+            showLoader("Loading classrooms...");
+            try {
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/classrooms`, { headers: authHeaders });
+                const data = await res.json();
+                hideLoader();
+
+                if (data.success) {
+                    const listContainer = document.getElementById('add-to-class-list');
+                    listContainer.innerHTML = '';
+                    let availableClasses = 0;
+                    data.classrooms.forEach(cr => {
+                        if (!currentClassrooms.includes(cr._id)) {
+                            availableClasses++;
+                            listContainer.innerHTML += `
+                                <label class="flex items-center gap-3 p-2 hover:bg-slate-50 cursor-pointer rounded-md">
+                                    <input type="checkbox" name="addClassroom" value="${cr._id}" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary" />
+                                    <span class="text-sm font-medium text-slate-700">${cr.name}</span>
+                                </label>
+                            `;
+                        }
+                    });
+                    if (availableClasses === 0) {
+                        listContainer.innerHTML = '<div class="text-sm text-slate-500 p-2 text-center">Student is already in all available classes.</div>';
+                    }
+
+                    const m = document.getElementById('modal-add-to-class');
+                    m.classList.add('show');
+                    m.style.display = 'flex';
+                    m.style.opacity = '1';
+                    m.style.zIndex = '99999';
+                }
+            } catch (e) { hideLoader(); alert("Failed to load classrooms"); }
+
+            const targetMenu = document.getElementById(`student-menu-${studentId}`);
+            if (targetMenu) targetMenu.classList.add('hidden');
+        }
+
+        function closeAddClassModal() {
+            const m = document.getElementById('modal-add-to-class');
+            m.classList.remove('show');
+            m.style.display = 'none';
+        }
+
+        document.getElementById('form-add-to-class').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentId = document.getElementById('add-to-class-student-id').value;
+            const checkboxes = document.querySelectorAll('input[name="addClassroom"]:checked');
+            const classroomIds = Array.from(checkboxes).map(cb => cb.value);
+
+            if (classroomIds.length === 0) return alert("Please select at least one classroom");
+
+            try {
+                showLoader("Adding to class...");
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/students/${studentId}/add-classes`, {
+                    method: 'PUT',
+                    headers: authHeaders,
+                    body: JSON.stringify({ classroomIds })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAddClassModal();
+                    await loadStudentsForClassroom(activeClassroomId);
+                    await loadClassrooms();
+                } else alert("Error: " + data.message);
+            } catch (e) { console.error(e); alert("Failed to add to classes"); } finally { hideLoader(); }
+        });
+
+        async function openMoveClassModal(studentId, studentName, classroomsJson) {
+            document.getElementById('move-class-student-id').value = studentId;
+            document.getElementById('move-class-student-name').textContent = studentName;
+
+            showLoader("Loading classrooms...");
+            try {
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/classrooms`, { headers: authHeaders });
+                const data = await res.json();
+                hideLoader();
+
+                if (data.success) {
+                    const select = document.getElementById('move-to-classroom-select');
+                    select.innerHTML = '<option value="">Select Classroom...</option>';
+                    data.classrooms.forEach(cr => {
+                        if (cr._id !== activeClassroomId) {
+                            select.innerHTML += `<option value="${cr._id}">${cr.name}</option>`;
+                        }
+                    });
+
+                    const m = document.getElementById('modal-move-class');
+                    m.classList.add('show');
+                    m.style.display = 'flex';
+                    m.style.opacity = '1';
+                    m.style.zIndex = '99999';
+                }
+            } catch (e) { hideLoader(); alert("Failed to load classrooms"); }
+
+            const targetMenu = document.getElementById(`student-menu-${studentId}`);
+            if (targetMenu) targetMenu.classList.add('hidden');
+        }
+
+        function closeMoveClassModal() {
+            const m = document.getElementById('modal-move-class');
+            m.classList.remove('show');
+            m.style.display = 'none';
+        }
+
+        document.getElementById('form-move-class').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const studentId = document.getElementById('move-class-student-id').value;
+            const toClassroomId = document.getElementById('move-to-classroom-select').value;
+
+            if (!toClassroomId) return alert("Please select a classroom");
+
+            try {
+                showLoader("Moving student...");
+                const res = await fetch(`${API_CONFIG.AUTH_BASE_URL}/students/${studentId}/move-class`, {
+                    method: 'PUT',
+                    headers: authHeaders,
+                    body: JSON.stringify({ fromClassroomId: activeClassroomId, toClassroomId })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeMoveClassModal();
+                    await loadStudentsForClassroom(activeClassroomId);
+                    await loadClassrooms();
+                } else alert("Error: " + data.message);
+            } catch (e) { console.error(e); alert("Failed to move class"); } finally { hideLoader(); }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userJson = localStorage.getItem('smartassessUser');
+            if (userJson) {
+                try {
+                    const user = JSON.parse(userJson);
+                    const nameEl = document.getElementById('sidebar-user-name');
+                    if (nameEl && user.name) nameEl.textContent = user.name;
+                } catch (err) {
+                    console.error("Failed to parse user session", err);
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>

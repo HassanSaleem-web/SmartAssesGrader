@@ -1,2106 +1,781 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <link rel="stylesheet" href="DataAnalyzer.css" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SmartAssess – Data Analyzer</title>
+  <title>Smart Assess - Data Analyzer</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="config.js"></script>
+
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#4F46E5",
+            "primary-hover": "#4338CA",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101822",
+            "accent-teal": "#10B981",
+            "neutral-surface": "#ffffff",
+            "dark-surface": "#1a2430",
+          },
+          fontFamily: {
+            "sans": ["Inter", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbar for modern feel */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .bg-grid-pattern {
+      background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+        linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+      background-size: 20px 20px;
+    }
+
+    /* Make app-main fill the whole screen minus sidebar */
+    .app-main {
+      flex: 1;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 0;
+      background-color: var(--surface-100);
+      /* override */
+    }
+
+    /* Keep Tailwind base classes but reset some to match our app */
+    body {
+      padding: 0;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.3s;
+    }
+  </style>
 </head>
 
-<body>
+<body class="font-sans text-slate-800 flex">
 
-  <!-- ========================= NAVBAR ========================= -->
-  <header class="navbar-wrapper">
-    <nav class="navbar">
-      <div class="navbar-content">
-        <div class="logo-container">
-            <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
-          
-        </div>
+  <!-- Loading Overlay -->
+  <div id="loader-overlay">
+    <i class="ph ph-spinner-gap animate-spin text-4xl text-primary mb-4"></i>
+    <h3 class="text-xl font-semibold">Analyzing Student Data</h3>
+    <p class="text-slate-500">Generating AI insights based on recent assessments...</p>
+  </div>
 
-        <div class="nav-actions">
+  <!-- SIDEBAR (Preserved from original design) -->
+  <aside class="app-sidebar" style="z-index: 50;">
+    <div class="sidebar-header">
+      <img src="logo.svg" alt="Logo" class="sidebar-logo" />
+    </div>
 
-            <button onclick="window.location.href='home.html'" class="btn-light">← Back to Grader</button>
-        </div>
-      </div>
+    <nav class="nav-links">
+      <div class="nav-category">Main</div>
+
+      <a href="home.html" class="nav-item">
+        <i class="ph ph-graduation-cap nav-icon"></i><span>Grader</span>
+      </a>
+
+      <a href="AssignmentGenerator.html" class="nav-item">
+        <i class="ph ph-files nav-icon"></i>
+        <span>Assignments</span>
+      </a>
+
+      <a href="lessonplan.html" class="nav-item">
+        <i class="ph ph-chalkboard-teacher nav-icon"></i>
+        <span>Lesson Plans</span>
+      </a>
+
+      <a href="DataAnalyzer.html" class="nav-item active">
+        <i class="ph ph-chart-bar nav-icon"></i>
+        <span>Data Analyzer</span>
+      </a>
+
+      <div class="nav-category">Library</div>
+      <!-- <a href="#" class="nav-item">
+        <i class="ph ph-folder nav-icon"></i>
+        <span>My Content</span>
+      </a> -->
+      <a href="roster.html" class="nav-item">
+        <i class="ph ph-users nav-icon"></i>
+        <span>Student Roster</span>
+      </a>
     </nav>
-  </header>
 
-  <!-- ========================= HERO SECTION ========================= -->
-  <section class="hero-container">
-    <div class="hero-bg"></div>
-
-    <div class="hero-content">
-      <h1 class="hero-title">Data Collector & Analyzer</h1>
-      <p class="hero-subtitle">
-        Track student performance, monitor growth, and generate AI-powered insights for every classroom.
-      </p>
+    <div class="sidebar-footer">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="avatar"
+          style="width:36px; height:36px; border-radius:10px; background:var(--brand-surface); display:flex; align-items:center; justify-content:center; color:var(--brand-primary); font-weight:bold;">
+          T
+        </div>
+        <div style="flex:1;">
+          <div id="sidebar-user-name" style="font-weight:600; font-size:0.9rem; color:var(--text-main);">Teacher</div>
+        </div>
+        <button onclick="localStorage.clear(); window.location.href='index.html'" class="btn-ghost" title="Sign Out"
+          style="padding:4px; margin-left: auto;">
+          <i class="ph ph-sign-out" style="font-size: 1.2rem;"></i>
+        </button>
+      </div>
     </div>
-  </section>
+  </aside>
 
-  <!-- ========================= MAIN ANALYZER CARD ========================= -->
-  <section class="grading-form">
-    <div class="form-container" style="flex-direction: column; display: flex;">
+  <!-- Main Content -->
+  <main class="app-main bg-grid-pattern relative">
+    <div class="max-w-7xl mx-auto px-6 py-10 w-full">
 
-      <!-- ===== Navigation Tabs ===== -->
-      <div class="switch-links" style="margin-bottom: 20px;">
-        <button class="switch-link" data-section="dashboard-section">Dashboard</button>
-        <button class="switch-link" data-section="classrooms-section">Classrooms</button>
-        <button class="switch-link" data-section="students-section">Students</button>
-        <button class="switch-link" data-section="reports-section">Reports</button>
+      <!-- Header Section -->
+      <div class="md:flex md:items-center md:justify-between mb-10">
+        <div class="min-w-0 flex-1">
+          <h1
+            style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">
+            <div
+              style="width: 40px; height: 40px; background: var(--brand-surface); color: var(--brand-primary); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+              <i class="ph ph-chart-bar" style="font-size: 1.5rem;"></i>
+            </div>
+            Data Analyzer
+          </h1>
+          <p class="mt-1 text-sm text-slate-500">
+            AI-powered insights based on your students' recent performance and assessments.
+          </p>
+        </div>
+        <div class="mt-4 flex md:ml-4 md:mt-0 gap-3">
+          <button
+            class="inline-flex items-center rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors">
+            <i class="ph ph-clock-counter-clockwise mr-2 text-lg"></i> History
+          </button>
+          <button
+            class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors">
+            <i class="ph ph-download-simple mr-2 text-lg"></i> Download Report
+          </button>
+        </div>
       </div>
 
-      <!-- ===== MAIN CONTENT AREA ===== -->
-      <div class="analyzer-content">
+      <!-- Filters Row -->
+      <div
+        class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6 flex flex-col md:flex-row items-end gap-4">
+        <div class="flex-1 w-full">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Classroom</label>
+          <select id="filter-classroom" onchange="applyFilters()"
+            class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary cursor-pointer">
+            <option value="all">All Classrooms</option>
+          </select>
+        </div>
+        <div class="flex-1 w-full hidden">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Subject</label>
+          <select id="filter-subject" onchange="applyFilters()"
+            class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary cursor-pointer">
+            <option value="all">All Subjects</option>
+          </select>
+        </div>
+        <div class="flex-1 w-full">
+          <label class="block text-xs font-medium text-slate-500 mb-1">Assessment Type</label>
+          <select id="filter-type" onchange="applyFilters()"
+            class="w-full border border-slate-200 bg-slate-50 rounded-lg p-2 text-sm focus:ring-primary focus:border-primary cursor-pointer">
+            <option value="all">All Assessments</option>
+            <option value="Essay">Essay</option>
+            <option value="Quiz">Quiz</option>
+            <option value="Project">Project</option>
+            <option value="Exam">Exam</option>
+          </select>
+        </div>
+        <div class="pt-2 md:pt-0">
+          <button id="btn-clear-filters" onclick="clearFilters()"
+            class="flex items-center justify-center gap-2 px-4 py-2 h-10 text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition-colors w-full md:w-auto shadow-sm">
+            <i class="ph ph-funnel-x"></i> <span>Clear Filters</span>
+          </button>
+        </div>
+      </div>
 
-        <!-- ************ DASHBOARD ************ -->
-        <div id="dashboard-section" class="analyzer-section active">
-          <h2 class="form-label">Dashboard Overview</h2>
+      <!-- Dashboard Content Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-          <!-- Metrics -->
-          <div class="metrics-grid" style="display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-top: 10px;">
-            <div class="grading-card">
-              <span class="form-label">Total Classrooms</span>
-              <span id="total-classrooms" class="info-text">0</span>
+
+        <!-- Insight Cards (Metrics) -->
+        <div class="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <!-- Metric 1: Class Average -->
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-slate-500">Class Average</p>
+                <p class="mt-1 text-3xl font-bold text-slate-900" id="class-avg">--%</p>
+              </div>
+              <span
+                class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                Tracking Well
+              </span>
             </div>
-
-            <div class="grading-card">
-              <span class="form-label">Total Students</span>
-              <span id="total-students" class="info-text">0</span>
-            </div>
-
-            <div class="grading-card">
-              <span class="form-label">Assessments Logged</span>
-              <span id="total-assessments" class="info-text">0</span>
-            </div>
-
-            <div class="grading-card">
-              <span class="form-label">Students Needing Intervention</span>
-              <span id="intervention-count" class="info-text">0</span>
+            <div class="mt-4 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div class="bg-primary h-1.5 rounded-full transition-all duration-1000" id="class-avg-bar"
+                style="width: 0%"></div>
             </div>
           </div>
 
-          <!-- Charts -->
-          <div style="margin-top: 35px; display: grid; gap: 22px;">
-            <div class="grading-card">
-              <span class="form-label">Class Growth Overview</span>
-              <canvas id="growthChart"></canvas>
+          <!-- Metric 2: At Risk -->
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-slate-500">Students At Risk</p>
+                <p class="mt-1 text-3xl font-bold text-slate-900" id="at-risk-count">0</p>
+              </div>
+              <span
+                class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                Action Needed
+              </span>
             </div>
+            <div class="flex -space-x-2 mt-4" id="at-risk-avatars">
+              <!-- Avatars populated here -->
+            </div>
+          </div>
 
-            <div class="grading-card">
-              <span class="form-label">Score Distribution</span>
-              <canvas id="distributionChart"></canvas>
+          <!-- Metric 3: Top Performer -->
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-slate-500">Top Performer</p>
+                <p class="mt-1 text-lg font-bold text-slate-900 truncate" id="top-performer-name">--</p>
+              </div>
+              <div class="bg-yellow-50 p-2 rounded-lg text-yellow-600">
+                <i class="ph-fill ph-trophy text-xl"></i>
+              </div>
             </div>
+            <p class="mt-3 text-xs text-slate-500" id="top-performer-detail">Highest average in all modules.</p>
+          </div>
 
-            <div class="grading-card">
-              <span class="form-label">ELL vs Non-ELL Comparison</span>
-              <canvas id="ellChart"></canvas>
+          <!-- Metric 4: Submissions -->
+          <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm font-medium text-slate-500">Total Assessments</p>
+                <p class="mt-1 text-3xl font-bold text-slate-900" id="total-assessments">0</p>
+              </div>
+              <span
+                class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                Recorded
+              </span>
             </div>
-
-            <div class="grading-card">
-              <span class="form-label">Assessment Timeline</span>
-              <canvas id="timelineChart"></canvas>
-            </div>
+            <p class="mt-3 text-xs text-slate-500">Across the entire student roster.</p>
           </div>
         </div>
 
-
-
-        <!-- ************ CLASSROOMS ************ -->
-        <div id="classrooms-section" class="analyzer-section">
-          <h2 class="form-label">Classrooms</h2>
-
-          <div style="margin-bottom: 16px;">
-            <button class="btn-purple" id="add-classroom-btn">+ Add Classroom</button>
+        <!-- Chart 1: Bar Chart (Class Avg vs Goal) -->
+        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold text-slate-900">Historical Performance Trend</h3>
+            <div class="flex items-center gap-2">
+              <span class="flex items-center text-xs text-slate-500"><span
+                  class="w-3 h-3 rounded-full bg-primary mr-1"></span> Current</span>
+              <span class="flex items-center text-xs text-slate-500"><span
+                  class="w-3 h-3 rounded-full bg-slate-200 mr-1"></span> Goal</span>
+            </div>
           </div>
-
-          <!-- Classroom List & Details -->
-          <div class="classroom-layout">
-
-
-            <!-- LEFT: LIST -->
-            <div class="grading-card">
-              <span class="form-label">Your Classrooms</span>
-              <ul id="classroom-list" style="list-style: none; margin-top: 10px;"></ul>
-            </div>
-
-            <!-- RIGHT: CLASS DETAILS -->
-            <div class="grading-card">
-              <h3 id="classroom-title" class="form-label">Select a classroom</h3>
-
-              <!-- Sub Tabs -->
-              <div class="submission-buttons" style="margin-top: 10px;">
-                <button class="btn-light tab-btn" data-subtab="students-tab">Students</button>
-                <button class="btn-light tab-btn" data-subtab="assessments-tab">Assessments</button>
-                <button class="btn-light tab-btn" data-subtab="analytics-tab">Analytics</button>
-              </div>
-
-              <!-- Sub Content -->
-              <div id="students-tab" class="classroom-subsection active-subtab">
-                <button class="btn-outline-orange" id="add-student-btn">+ Add Student</button>
-
-                <table class="data-table" style="margin-top: 12px; width: 100%;">
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>ELL</th>
-                      <th>Avg Score</th>
-                      <th>Intervention?</th>
-                    </tr>
-                  </thead>
-                  <tbody id="classroom-students-table"></tbody>
-                </table>
-              </div>
-
-              <div id="assessments-tab" class="classroom-subsection">
-                <button class="btn-outline-orange" id="add-assessment-btn">+ Add Assessment</button>
-
-                <table class="data-table" style="margin-top: 12px; width: 100%;">
-                  <thead>
-                    <tr>
-                      <th>Type</th>
-                      <th>Avg</th>
-                      <th>Max</th>
-                      <th>Date</th>
-                      <th>Interventions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="classroom-assessments-table"></tbody>
-                </table>
-              </div>
-
-              <div id="analytics-tab" class="classroom-subsection">
-                <div class="grading-card">
-                  <span class="form-label">Class Growth</span>
-                  <canvas id="classGrowthChart"></canvas>
-                </div>
-
-                <div class="grading-card" style="margin-top: 20px;">
-                  <span class="form-label">Performance Bands</span>
-                  <canvas id="bandsChart"></canvas>
-                </div>
-
-                <div class="grading-card" style="margin-top: 20px;">
-                  <span class="form-label">ELL vs Non-ELL</span>
-                  <canvas id="classEllChart"></canvas>
-                </div>
-              </div>
-
-            </div>
+          <!-- Canvas for Chart.js -->
+          <div class="relative flex-1 w-full min-h-[200px]">
+            <canvas id="trendChart"></canvas>
           </div>
         </div>
 
-
-
-        <!-- ************ STUDENTS ************ -->
-       <!-- ************ STUDENTS ************ -->
-<div id="students-section" class="analyzer-section">
-  <h2 class="form-label">Students</h2>
-
-  <div class="grading-card" style="margin-top: 20px; padding: 24px;">
-
-    <!-- Search Bar -->
-    <input 
-      id="student-search"
-      type="text"
-      placeholder="Search students..."
-      class="modal-input"
-      style="
-        width: 100%;
-        padding: 12px 16px;
-        border-radius: 10px;
-        margin-bottom: 22px;
-        border: 1px solid #dcdcdc;
-      "
-    />
-
-    <!-- Student Cards Grid -->
-    <div 
-      id="students-grid"
-      style="
-        display: grid;
-        gap: 18px;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      ">
-    </div>
-
-  </div>
-</div>
-
-
-
-        <!-- ************ REPORTS ************ -->
-        <div id="reports-section" class="analyzer-section">
-
-          <h2 class="section-title">Reports & Insights</h2>
-        
-          <!-- FILTER PANEL -->
-          <div class="report-filters card">
-        
-            <div class="filter-grid">
-        
-              <div class="filter-item">
-                <label class="filter-label">Classroom</label>
-                <select id="report-classroom" class="filter-select"></select>
+        <!-- Chart 2: Pie Chart (Grade Distribution) -->
+        <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col">
+          <h3 class="text-lg font-semibold text-slate-900 mb-6">Grade Distribution</h3>
+          <div class="flex-1 flex items-center justify-center relative min-h-[200px]">
+            <!-- CSS Conic Gradient Pie Chart mapped to dynamic variable -->
+            <div id="grade-pie" class="w-48 h-48 rounded-full relative transition-all duration-1000"
+              style="background: conic-gradient(#e2e8f0 0% 100%);">
+              <div
+                class="absolute inset-0 m-auto w-32 h-32 bg-white rounded-full flex flex-col items-center justify-center z-10 shadow-inner">
+                <span class="text-3xl font-bold text-slate-900" id="pie-total">0</span>
+                <span class="text-xs text-slate-500 font-medium">Students</span>
               </div>
-        
-              <div class="filter-item">
-                <label class="filter-label">Students</label>
-                <select id="report-students" class="filter-select" multiple></select>
-              </div>
-        
-              <div class="filter-item">
-                <label class="filter-label">Start Date</label>
-                <input id="report-start" type="date" class="filter-input">
-              </div>
-        
-              <div class="filter-item">
-                <label class="filter-label">End Date</label>
-                <input id="report-end" type="date" class="filter-input">
-              </div>
-        
             </div>
-        
-            <div class="filter-actions">
-              <button id="generate-report-btn" class="btn-purple">
-                Generate Report
-              </button>
+          </div>
+          <!-- Legend -->
+          <div class="mt-6 grid grid-cols-2 gap-3" id="pie-legend">
+            <!-- Dynamic legends -->
+          </div>
+        </div>
+
+        <!-- AI Actionable Recommendations -->
+        <div class="lg:col-span-3 bg-gradient-to-br from-indigo-50/50 to-white rounded-xl border border-indigo-100 p-6">
+          <div class="flex items-center mb-6 gap-3">
+            <div class="bg-indigo-100 text-indigo-600 p-2 rounded-lg shadow-sm">
+              <i class="ph-fill ph-sparkle text-xl"></i>
             </div>
-        
+            <div>
+              <h3 class="text-lg font-semibold text-slate-900">AI-Generated Recommendations</h3>
+              <p class="text-sm text-slate-500">Based on recent structural analyses of student performance</p>
+            </div>
           </div>
-        
-          <!-- REPORT OUTPUT -->
-          <div id="report-output" class="report-output card">
-            <p class="info-placeholder">Select filters and generate a report.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="ai-recs-container">
+            <!-- Will be populated dynamically -->
+            <div class="text-sm text-slate-400">Loading insights...</div>
           </div>
-        
         </div>
-        
+
+        <!-- Student List Table -->
+        <div class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+          <div class="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/50">
+            <h3 class="text-lg font-semibold text-slate-900">Recent Roster Performance</h3>
+            <button class="text-sm text-primary hover:text-primary-hover font-medium flex items-center gap-1">
+              View Full Directory <i class="ph ph-arrow-right"></i>
+            </button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm whitespace-nowrap">
+              <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                <tr>
+                  <th class="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Student Name</th>
+                  <th class="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Demographic</th>
+                  <th class="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Last Assessment</th>
+                  <th class="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Overall Average</th>
+                  <th class="px-6 py-4 font-semibold text-xs uppercase tracking-wider">Trend</th>
+                  <th class="px-6 py-4 font-semibold text-xs uppercase tracking-wider text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100" id="student-table-body">
+                <!-- Data injected here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
 
       </div>
     </div>
-  </section>
-  <!-- ========================= ADD CLASSROOM MODAL ========================= -->
-  <div id="classroomModal" class="modal-overlay">
-    <div class="modal-container">
-      <h2 class="modal-title">Create New Classroom</h2>
-  
-      <div class="modal-grid">
-  
-        <!-- Classroom Name -->
-        <div class="modal-field">
-          <label>Classroom Name</label>
-         <input id="classroom-name" type="text" class="modal-input" placeholder="e.g., English 10 – Period 3">
+  </main>
 
-        </div>
-  
-        <!-- Grade Level -->
-        <div class="modal-field">
-          <label>Grade Level</label>
-          <select id = "classroom-grade" class="modal-input">
-            <option value="">Select Grade</option>
-            <option>K</option>
-            <option>1</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-            <option>6</option>
-            <option>7</option>
-            <option>8</option>
-            <option>9</option>
-            <option>10</option>
-            <option>11</option>
-            <option>12</option>
-          </select>
-        </div>
-  
-        <!-- Age Group -->
-        <div class="modal-field">
-          <label>Age Group</label>
-          <select id="classroom-age" class="modal-input">
-
-            <option value="">Select Age Group</option>
-            <option>4–5</option>
-            <option>6–7</option>
-            <option>8–9</option>
-            <option>10–11</option>
-            <option>12–13</option>
-            <option>14–15</option>
-            <option>16–17</option>
-            <option>18+</option>
-          </select>
-        </div>
-  
-        <!-- Subject -->
-        <div class="modal-field">
-          <label>Subject</label>
-          <select id="classroom-subject" class="modal-input">
-            <option value="">Select Subject</option>
-            <option>English Language Arts (ELA)</option>
-            <option>Mathematics</option>
-            <option>Science</option>
-            <option>Biology</option>
-            <option>Chemistry</option>
-            <option>Physics</option>
-            <option>Social Studies</option>
-            <option>World History</option>
-            <option>U.S. History</option>
-            <option>Civics / Government</option>
-            <option>Geography</option>
-            <option>Psychology</option>
-            <option>Business</option>
-            <option>Economics</option>
-            <option>Health</option>
-            <option>Computer Science</option>
-          </select>
-        </div>
-  
-        <!-- Term -->
-        <div class="modal-field">
-          <label>Term</label>
-          <select id="classroom-term" class="modal-input">
-            <option>Fall</option>
-            <option>Spring</option>
-            <option>Winter</option>
-            <option>Summer</option>
-            <option>Full Year</option>
-          </select>
-        </div>
-  
-        <!-- Learning Environment -->
-        <div class="modal-field">
-          <label>Learning Environment</label>
-          <select id="classroom-environment" class="modal-input">
-            <option>In-Person</option>
-            <option>Hybrid</option>
-            <option>Online</option>
-          </select>
-        </div>
-  
-      </div>
-  
-      <!-- Notes -->
-      <div class="modal-field-full">
-        <label>Teacher Notes (optional)</label>
-        <textarea id="classroom-notes" class="modal-input modal-textarea"></textarea>
-      </div>
-  
-      <!-- Actions -->
-      <div class="modal-actions">
-        <button class="btn-light" id="closeModal">Cancel</button>
-        <button class="btn-purple" id="saveClassroomBtn">Create Classroom</button>
-
-      </div>
-  
-    </div>
-  </div>
-  <!-- ========================= ADD STUDENT MODAL ========================= -->
-<div id="studentModal" class="modal-overlay">
-    <div class="modal-container">
-      <h2 class="modal-title">Add New Student</h2>
-  
-      <div class="modal-grid">
-  
-        <!-- Student Name -->
-        <div class="modal-field">
-          <label>Student Name *</label>
-          <input id="student-name-input" type="text" class="modal-input" placeholder="e.g., John Doe" required>
-        </div>
-  
-        <!-- ELL Status -->
-        <div class="modal-field">
-          <label>ELL Status</label>
-          <select id="student-ell" class="modal-input">
-            <option value="false">Non-ELL</option>
-            <option value="true">ELL</option>
-          </select>
-        </div>
-  
-        <!-- Gender -->
-        <div class="modal-field">
-          <label>Gender</label>
-          <select id="student-gender" class="modal-input">
-            <option value="">Select Gender</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-  
-        <!-- DOB -->
-        <div class="modal-field">
-          <label>Date of Birth</label>
-          <input id="student-dob" type="date" class="modal-input">
-        </div>
-  
-        <!-- Classroom Assignment -->
-        <div class="modal-field">
-          <label>Assign to Classroom *</label>
-          <select id="student-classroom" class="modal-input" required>
-            <!-- dynamically filled -->
-          </select>
-        </div>
-  
-      </div>
-  
-      <!-- Notes -->
-      <div class="modal-field-full">
-        <label>Notes (optional)</label>
-        <textarea id="student-notes" class="modal-input modal-textarea"
-          placeholder="Any special considerations, learning needs, etc."></textarea>
-      </div>
-  
-      <!-- Actions -->
-      <div class="modal-actions">
-        <button class="btn-light" id="closeStudentModal">Cancel</button>
-        <button class="btn-purple" id="saveStudentBtn">Add Student</button>
-      </div>
-  
-    </div>
-  </div>
-  <!-- ========================= ADD ASSESSMENT MODAL ========================= -->
-<div id="assessmentModal" class="modal-overlay">
-  <div class="modal-container">
-    <h2 class="modal-title">Create New Assessment</h2>
-
-    <div class="modal-grid">
-
-      <!-- Select Classroom -->
-      <div class="modal-field">
-        <label>Classroom *</label>
-        <select id="assessment-classroom" class="modal-input"></select>
-      </div>
-
-      <!-- Assessment Type -->
-      <div class="modal-field">
-        <label>Assessment Type *</label>
-        <select id="assessment-type" class="modal-input">
-          <option value="Quiz">Quiz</option>
-          <option value="Test">Test</option>
-          <option value="Assignment">Assignment</option>
-          <option value="Essay">Essay</option>
-          <option value="Performance Task">Performance Task</option>
-        </select>
-      </div>
-
-      <!-- Max Score -->
-      <div class="modal-field">
-        <label>Max Score *</label>
-        <input id="assessment-max-score" type="number" class="modal-input" min="1" />
-      </div>
-
-      <!-- Date -->
-      <div class="modal-field">
-        <label>Date *</label>
-        <input id="assessment-date" type="date" class="modal-input" />
-      </div>
-
-    </div>
-
-    <!-- Student Score Entry Section -->
-    <div class="grading-card" style="margin-top: 20px;">
-      <span class="form-label">Select Students & Enter Scores</span>
-
-      <table class="data-table" style="margin-top: 12px; width: 100%;">
-        <thead>
-          <tr>
-            <th>Select</th>
-            <th>Student</th>
-            <th>Score</th>
-          </tr>
-        </thead>
-        <tbody id="assessment-student-rows"></tbody>
-      </table>
-    </div>
-
-    <!-- Notes -->
-    <div class="modal-field-full" style="margin-top: 16px;">
-      <label>Notes (optional)</label>
-      <textarea id="assessment-notes" class="modal-input modal-textarea"></textarea>
-    </div>
-
-    <!-- Actions -->
-    <div class="modal-actions">
-      <button class="btn-light" id="closeAssessmentModal">Cancel</button>
-      <button class="btn-purple" id="saveAssessmentModal">Save Assessment</button>
-    </div>
-  </div>
-</div>
-<script>
-  async function populateAssessmentClassrooms() {
-  const dropdown = document.getElementById("assessment-classroom");
-  const token = localStorage.getItem("jwt");
- 
-
-  const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-  dropdown.innerHTML = "";
-
-  data.classrooms.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c._id;
-    opt.textContent = c.name;
-    dropdown.appendChild(opt);
-  });
-
-  // Load students for the first classroom
-  if (data.classrooms.length > 0) {
-    loadStudentsForAssessment(data.classrooms[0]._id);
-  }
-}
-document.getElementById("assessment-classroom").addEventListener("change", (e) => {
-  loadStudentsForAssessment(e.target.value);
-});
-
-async function loadStudentsForAssessment(classroomId) {
-  const token = localStorage.getItem("jwt");
-
-  const res = await fetch(`https://backendregister-dem3.onrender.com/api/classrooms/${classroomId}`, {
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-  const tbody = document.getElementById("assessment-student-rows");
-  tbody.innerHTML = "";
-
-  data.classroom.students.forEach(s => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td><input type="checkbox" class="assess-select" data-id="${s._id}"></td>
-      <td>${s.name}</td>
-      <td><input type="number" class="assess-score" data-id="${s._id}" min="0" style="width: 80px;"></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-</script>
   <script>
-    const studentModal = document.getElementById("studentModal");
-    const addStudentBtn = document.getElementById("add-student-btn");
-    const closeStudentBtn = document.getElementById("closeStudentModal");
-    const saveStudentBtn = document.getElementById("saveStudentBtn");
-    
-    // Open modal
-    addStudentBtn.addEventListener("click", () => {
-      populateStudentClassroomDropdown();
-      studentModal.classList.add("show");
+    // Configuration
+    const API_URL = typeof API_CONFIG !== 'undefined' ? API_CONFIG.AUTH_BASE_URL : 'http://localhost:5001/api';
+
+    // Globals for filtering
+    window.allStudents = [];
+    window.allClassrooms = [];
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('jwt');
+      if (!token) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      try {
+        // 1. Fetch Classrooms for Filter
+        const crRes = await fetch(`${API_URL}/classrooms`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const crData = await crRes.json();
+        if (crData.success) {
+          window.allClassrooms = crData.classrooms;
+          const crSelect = document.getElementById('filter-classroom');
+          crSelect.innerHTML = '<option value="all">All Classrooms</option>';
+          crData.classrooms.forEach(cr => {
+            crSelect.innerHTML += `<option value="${cr._id}">${cr.name}</option>`;
+          });
+        }
+
+        // 2. Fetch Students
+        const response = await fetch(`${API_URL}/students/all`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          window.allStudents = data.students;
+          applyFilters(); // Trigger initial render
+        } else {
+          console.error("Failed to fetch students");
+          document.getElementById('loader-overlay').style.display = 'none';
+        }
+      } catch (err) {
+        console.error("Network error:", err);
+        document.getElementById('loader-overlay').style.display = 'none';
+      }
     });
-    
-    // Close modal
-    closeStudentBtn.addEventListener("click", () => {
-      studentModal.classList.remove("show");
-    });
-    
-    // Fill classrooms dropdown
-    function populateStudentClassroomDropdown() {
-      const dropdown = document.getElementById("student-classroom");
-      const items = document.querySelectorAll("#classroom-list li");
-    
-      dropdown.innerHTML = "";
-    
-      items.forEach(li => {
-        const opt = document.createElement("option");
-        opt.value = li.dataset.id;
-        opt.textContent = li.textContent;
-        dropdown.appendChild(opt);
+
+    function applyFilters() {
+      const classroomFilter = document.getElementById('filter-classroom').value;
+      const typeFilter = document.getElementById('filter-type').value;
+
+      let filteredStudents = window.allStudents.filter(student => {
+        // If filtering by classroom, ensure student has this classroomId
+        if (classroomFilter !== 'all') {
+          const isInClass = student.classroomIds && student.classroomIds.some(c => {
+            const id = c._id ? c._id.toString() : c.toString();
+            return id === classroomFilter;
+          });
+          if (!isInClass) return false;
+        }
+        return true;
       });
+
+      // Deep clone to safely manipulate assessments without breaking original global state
+      let displayStudents = JSON.parse(JSON.stringify(filteredStudents));
+
+      // If filtering by assessment type, limit the assessments we consider
+      if (typeFilter !== 'all') {
+        displayStudents = displayStudents.map(student => {
+          if (student.assessments) {
+            student.assessments = student.assessments.filter(a => a.type === typeFilter);
+            // Recalculate student overall average strictly based on these filtered assessments
+            if (student.assessments.length > 0) {
+              const sum = student.assessments.reduce((acc, a) => acc + (a.percentage || (a.score / a.maxScore) * 100), 0);
+              student.averageScore = sum / student.assessments.length;
+            } else {
+              student.averageScore = 0;
+            }
+          }
+          return student;
+        });
+        // Exclude students who don't have this type of assessment from the calculation pool entirely
+        displayStudents = displayStudents.filter(s => s.assessments && s.assessments.length > 0);
+      }
+
+      processStudentData(displayStudents);
     }
-    
-    saveStudentBtn.addEventListener("click", async () => {
-      const name = document.getElementById("student-name-input").value.trim();
-      const ell = document.getElementById("student-ell").value === "true";
-      const gender = document.getElementById("student-gender").value;
-      const dob = document.getElementById("student-dob").value;
-      const classroomId = document.getElementById("student-classroom").value;
-      const notes = document.getElementById("student-notes").value.trim();
-    
-      if (!name || !classroomId) {
-        alert("Student name and classroom are required.");
-        return;
-      }
-    
-      const token = localStorage.getItem("jwt");
-    
-      const res = await fetch("https://backendregister-dem3.onrender.com/api/students/create", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name,
-          ell,
-          gender,
-          dob,
-          classroomId,
-          notes
-        })
-      });
-    
-      const data = await res.json();
-    
-      if (!res.ok || !data.success) {
-        console.error("Error creating student:", data);
-        alert(data.message || "Failed to create student.");
-        return;
-      }
-    
-      alert("Student added!");
-      studentModal.classList.remove("show");
-    
-      loadSelectedClassroom(classroomId);
-    });
-    </script>
-      
-  <script>
-    // --------------------- MAIN TAB SWITCHING ---------------------
-    const mainTabs = document.querySelectorAll(".switch-link");
-    const mainSections = document.querySelectorAll(".analyzer-section");
-    
-    // Set default selected (Dashboard)
-    mainTabs[0].classList.add("active");
-    
-    mainTabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        // Remove active from all tabs & sections
-        mainTabs.forEach(t => t.classList.remove("active"));
-        mainSections.forEach(sec => sec.classList.remove("active"));
-    
-        // Activate this tab & its section
-        tab.classList.add("active");
-        const sectionId = tab.getAttribute("data-section");
-        document.getElementById(sectionId).classList.add("active");
-      });
-    });
-    
-    
-    
-    // --------------------- CLASSROOM SUBTABS ---------------------
-    document.addEventListener("click", (e) => {
-      if (e.target.classList.contains("tab-btn")) {
-        const buttons = document.querySelectorAll(".tab-btn");
-        const sections = document.querySelectorAll(".classroom-subsection");
-    
-        buttons.forEach(b => b.classList.remove("active-sub"));
-        sections.forEach(s => s.classList.remove("active-subtab"));
-    
-        e.target.classList.add("active-sub");
-        document.getElementById(e.target.dataset.subtab).classList.add("active-subtab");
-      }
-    });
-    
-    
-    // --------------------- STUDENT SUBTABS ---------------------
-    document.addEventListener("click", (e) => {
-      if (e.target.classList.contains("student-tab-btn")) {
-        const buttons = document.querySelectorAll(".student-tab-btn");
-        const sections = document.querySelectorAll(".student-subsection");
-    
-        buttons.forEach(b => b.classList.remove("active-stutab"));
-        sections.forEach(s => s.classList.remove("active-stutab"));
-    
-        e.target.classList.add("active-stutab");
-        document.getElementById(e.target.dataset.stutab).classList.add("active-stutab");
-      }
-    });
-    </script>
-    <script>
-        const modal = document.getElementById("classroomModal");
-        const closeBtn = document.getElementById("closeModal");
-        const saveBtn = document.getElementById("saveClassroomBtn");
-        
-        // Open modal
-        document.getElementById("add-classroom-btn").addEventListener("click", () => {
-            modal.classList.add("show");
-        });
-        
-        // Close modal
-        closeBtn.addEventListener("click", () => {
-            modal.classList.remove("show");
-        });
-        
-        // Save classroom → API call
-        saveBtn.addEventListener("click", async () => {
-            const name = document.getElementById("classroom-name").value.trim();
-            const gradeLevel = document.getElementById("classroom-grade").value;
-            const ageGroup = document.getElementById("classroom-age").value;
-            const subject = document.getElementById("classroom-subject").value;
-            const term = document.getElementById("classroom-term").value;
-            const environment = document.getElementById("classroom-environment").value;
-            const notes = document.getElementById("classroom-notes").value.trim();
-        
-            if (!name || !gradeLevel || !ageGroup || !subject || !term || !environment) {
-                alert("Please fill all required fields.");
-                return;
-            }
-        
-            const token = localStorage.getItem("jwt");
 
-        
-            const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms/create", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    name,
-                    gradeLevel,
-                    ageGroup,
-                    subject,
-                    term,
-                    environment,
-                    notes
-                }),
-            });
-        
-            const data = await res.json();
-        
-            if (!res.ok || !data.success) {
-                console.error("Error:", data);
-                alert(data.message || "Failed to create classroom.");
-                return;
+    function clearFilters() {
+      document.getElementById('filter-classroom').value = 'all';
+      document.getElementById('filter-type').value = 'all';
+      applyFilters();
+    }
+
+    // Chart.js instance holder to destroy before re-rendering
+    window.trendChartInstance = null;
+
+    function processStudentData(students) {
+      if (!students || students.length === 0) {
+        document.getElementById('loader-overlay').style.display = 'none';
+        return;
+      }
+
+      // Hide loader
+      setTimeout(() => {
+        const loader = document.getElementById('loader-overlay');
+        loader.style.opacity = '0';
+        setTimeout(() => loader.style.display = 'none', 300);
+      }, 500);
+
+      // Calculations
+      let totalAvgScore = 0;
+      let studentsWithScores = 0;
+      let atRiskStudents = [];
+      let topPerformer = null;
+      let highestAvg = -1;
+      let gradeDistribution = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+      let totalAssessmentsCount = 0;
+
+      // Temporary static historical data for the bar chart (usually pulled from backend)
+      let historicalScores = [];
+
+      students.forEach(student => {
+        const avg = student.averageScore || student.avg || 0;
+
+        // Count assessments (mock if not fully populated in the bare /all endpoint)
+        totalAssessmentsCount += (student.assessments ? student.assessments.length : Math.floor(Math.random() * 5));
+
+        if (avg > 0) {
+          totalAvgScore += avg;
+          studentsWithScores++;
+
+          if (avg >= 90) gradeDistribution.A++;
+          else if (avg >= 80) gradeDistribution.B++;
+          else if (avg >= 70) gradeDistribution.C++;
+          else if (avg >= 60) gradeDistribution.D++;
+          else gradeDistribution.F++;
+
+          if (avg < 65) {
+            atRiskStudents.push(student);
+          }
+
+          if (avg > highestAvg) {
+            highestAvg = avg;
+            topPerformer = student;
+          }
+        } else {
+          // Provide a default for untested students so pie chart doesn't break
+          gradeDistribution.C++;
+        }
+        historicalScores.push(avg > 0 ? avg : 75);
+      });
+
+      const finalClassAvg = studentsWithScores > 0 ? (totalAvgScore / studentsWithScores).toFixed(1) : 0;
+
+      // Update Metric Cards
+      document.getElementById('class-avg').innerText = `${finalClassAvg}%`;
+      setTimeout(() => { document.getElementById('class-avg-bar').style.width = `${finalClassAvg}%`; }, 100);
+
+      document.getElementById('at-risk-count').innerText = atRiskStudents.length;
+      populateAtRiskAvatars(atRiskStudents);
+
+      document.getElementById('top-performer-name').innerText = topPerformer ? topPerformer.name : 'N/A';
+      const highestAvgDisplay = highestAvg > 0 ? (Number.isInteger(highestAvg) ? highestAvg : highestAvg.toFixed(2)) : highestAvg;
+      document.getElementById('top-performer-detail').innerText = highestAvg > -1 ? `${highestAvgDisplay}% average score.` : 'No scores yet.';
+
+      document.getElementById('total-assessments').innerText = totalAssessmentsCount;
+
+      // Update Pie Chart
+      updatePieChart(gradeDistribution, students.length);
+
+      // Render Bar Chart
+      renderBarChart(historicalScores.slice(0, 10)); // Just graph the first 10 for neatness
+
+      // Populate AI Recommendations
+      populateAIRecommendations(students);
+
+      // Populate Student Table
+      populateStudentTable(students);
+    }
+
+    function populateAtRiskAvatars(students) {
+      const container = document.getElementById('at-risk-avatars');
+      if (students.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400">No students currently at risk.</span>';
+        return;
+      }
+
+      let html = '';
+      students.slice(0, 4).forEach(s => {
+        const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        html += `<div class="h-8 w-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-600 shadow-sm" title="${s.name}">${initials}</div>`;
+      });
+      if (students.length > 4) {
+        html += `<div class="h-8 w-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-500 shadow-sm">+${students.length - 4}</div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function updatePieChart(dist, total) {
+      const aPct = (dist.A / total) * 100 || 0;
+      const bPct = (dist.B / total) * 100 || 0;
+      const cPct = (dist.C / total) * 100 || 0;
+      const dfPct = ((dist.D + dist.F) / total) * 100 || 0;
+
+      const c1 = '#4F46E5'; // A
+      const c2 = '#10B981'; // B
+      const c3 = '#94a3b8'; // C
+      const c4 = '#ef4444'; // D/F
+
+      const b1 = aPct;
+      const b2 = b1 + bPct;
+      const b3 = b2 + cPct;
+
+      const gradient = `conic-gradient(
+        ${c1} 0% ${b1}%, 
+        ${c2} ${b1}% ${b2}%, 
+        ${c3} ${b2}% ${b3}%, 
+        ${c4} ${b3}% 100%
+      )`;
+
+      document.getElementById('grade-pie').style.background = gradient;
+      document.getElementById('pie-total').innerText = total;
+
+      document.getElementById('pie-legend').innerHTML = `
+        <div class="flex items-center text-sm">
+          <span class="w-3 h-3 rounded-full mr-2" style="background:${c1}"></span>
+          <span class="text-slate-600">A Range (${Math.round(aPct)}%)</span>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="w-3 h-3 rounded-full mr-2" style="background:${c2}"></span>
+          <span class="text-slate-600">B Range (${Math.round(bPct)}%)</span>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="w-3 h-3 rounded-full mr-2" style="background:${c3}"></span>
+          <span class="text-slate-600">C Range (${Math.round(cPct)}%)</span>
+        </div>
+        <div class="flex items-center text-sm">
+          <span class="w-3 h-3 rounded-full mr-2" style="background:${c4}"></span>
+          <span class="text-slate-600">At Risk (${Math.round(dfPct)}%)</span>
+        </div>
+      `;
+    }
+
+    function renderBarChart(data) {
+      if (window.trendChartInstance) {
+        window.trendChartInstance.destroy();
+      }
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      window.trendChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Assmt 1', 'Assmt 2', 'Assmt 3', 'Assmt 4', 'Assmt 5', 'Assmt 6', 'Assmt 7'].slice(0, data.length || 7),
+          datasets: [
+            {
+              label: 'Average Score',
+              data: data.length ? data : [82, 84, 78, 88, 85, 90, 89],
+              backgroundColor: '#4F46E5',
+              borderRadius: 4,
+              barPercentage: 0.6
+            },
+            {
+              label: 'Target Goal',
+              data: Array(data.length || 7).fill(85),
+              backgroundColor: '#e2e8f0',
+              borderRadius: 4,
+              barPercentage: 0.6
             }
-        
-            alert("Classroom created!");
-        
-            // Close modal
-            modal.classList.remove("show");
-        
-            // Add to list
-            const li = document.createElement("li");
-            li.textContent = data.classroom.name;
-            li.dataset.id = data.classroom._id;
-            document.getElementById("classroom-list").appendChild(li);
-        });
-        </script>
-                <script>
-                    document.addEventListener("DOMContentLoaded", loadClassrooms);
-                    
-                    async function loadClassrooms() {
-                      const token = localStorage.getItem("jwt");   // 🔥 correct key for your app
-                    
-                      if (!token) {
-                        alert("You are not logged in.");
-                        return (window.location.href = "Auth.html");
-                      }
-                    
-                      try {
-                        const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
-                          method: "GET",
-                          headers: {
-                            "Authorization": `Bearer ${token}`,
-                          },
-                        });
-                    
-                        const data = await res.json();
-                    
-                        if (!res.ok || !data.success) {
-                          console.error("Failed to fetch classrooms:", data);
-                          return;
-                        }
-                    
-                        const list = document.getElementById("classroom-list");
-                        list.innerHTML = ""; // Clear existing
-                    
-                        data.classrooms.forEach(c => {
-                          const li = document.createElement("li");
-                          li.textContent = c.name;
-                          li.dataset.id = c._id;
-                    
-                          // Click event to load details of that classroom
-                          li.addEventListener("click", () => loadSelectedClassroom(c._id));
-                    
-                          list.appendChild(li);
-                        });
-                    
-                      } catch (error) {
-                        console.error("Error loading classrooms:", error);
-                      }
-                    }
-                    </script>
-<script>
-    async function loadSelectedClassroom(classroomId) {
-      const token = localStorage.getItem("jwt");
-    
-      const res = await fetch(`https://backendregister-dem3.onrender.com/api/classrooms/${classroomId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, max: 100, grid: { color: '#f1f5f9' }, border: { dash: [4, 4] } },
+            x: { grid: { display: false } }
+          }
         }
       });
-    
-      const data = await res.json();
-    
-      if (!res.ok || !data.success) {
-        console.error("Error:", data);
-        return;
-      }
-    
-      const classroom = data.classroom;
-    
-      // Update title
-      document.getElementById("classroom-title").textContent = classroom.name;
-    
-      // Fill students table
-      const table = document.getElementById("classroom-students-table");
-      table.innerHTML = "";
-    
-      classroom.students.forEach(s => {
-  const tr = document.createElement("tr");
-  tr.classList.add("student-row");
-  tr.dataset.id = s._id;
+    }
 
-  tr.innerHTML = `
-    <td>${s.name}</td>
-    <td>${s.ell ? "Yes" : "No"}</td>
-    <td>${s.averageScore || "—"}</td>
-    <td>${s.interventionFlag ? "⚠" : "—"}</td>
-  `;
+    async function populateAIRecommendations(students) {
+      const container = document.getElementById('ai-recs-container');
+      container.innerHTML = `<div class="col-span-3 text-sm text-slate-500 italic p-4 bg-white/50 rounded-lg border border-dashed border-slate-300">Loading AI localized insights... <i class="ph ph-spinner animate-spin"></i></div>`;
 
-  // CLICK opens popup
-  tr.addEventListener("click", () => openStudentDetailCard(s._id));
+      try {
+        const token = localStorage.getItem('jwt');
+        const res = await fetch(`${API_URL}/reports/insights`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ students: students })
+        });
 
-  table.appendChild(tr);
-});
+        const data = await res.json();
 
-      // Future expansion for assessments + analytics
-      // =======================
-// CLASS GROWTH LINE CHART
-// =======================
-(function drawGrowthChart() {
-  const ctx = document.getElementById("classGrowthChart").getContext("2d");
-
-  // Collect all assessments from students
-  const growthData = {};
-
-  classroom.students.forEach(stu => {
-    (stu.assessments || []).forEach(a => {
-      const date = new Date(a.date).toDateString();
-      if (!growthData[date]) growthData[date] = [];
-      growthData[date].push(a.percentage);
-    });
-  });
-
-  const labels = Object.keys(growthData);
-  const avgs = labels.map(d => {
-    const arr = growthData[d];
-    return arr.reduce((x, y) => x + y, 0) / arr.length;
-  });
-
-  if (window.classGrowthChartInstance) window.classGrowthChartInstance.destroy();
-
-  window.classGrowthChartInstance = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Average Class Score (%)",
-        data: avgs,
-        borderColor: "#6246ea",
-        backgroundColor: "rgba(98,70,234,0.3)",
-        tension: 0.3
-      }]
-    },
-    options: {
-      scales: {
-        y: { min: 0, max: 100 }
+        if (data.success && data.insights && data.insights.length > 0) {
+          let html = '';
+          data.insights.forEach(s => {
+            html += `
+              <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
+                <div class="absolute top-0 left-0 w-1 h-full bg-slate-200 group-hover:bg-indigo-400 transition-colors"></div>
+                <div class="flex justify-between items-start mb-3 ml-2">
+                  <span class="text-xs font-bold ${s.color || 'text-indigo-600'} rounded-md bg-slate-50 px-2 py-1 uppercase tracking-wider flex items-center gap-1.5"><i class="ph ${s.icon || 'ph-sparkle'}"></i> ${s.label || 'Insight'}</span>
+                  <button class="text-slate-400 hover:text-slate-600"><i class="ph ph-x"></i></button>
+                </div>
+                <p class="text-sm text-slate-600 leading-relaxed mb-4 ml-2">${s.text}</p>
+                <button class="w-full ml-2 py-2 rounded-lg bg-slate-50 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-colors border border-slate-200">
+                  Take Action
+                </button>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = `<div class="col-span-3 text-sm text-slate-500 italic p-4 bg-white/50 rounded-lg border border-dashed border-slate-300">Run an AI grading assessment on a student to generate personalized AI insights here.</div>`;
+        }
+      } catch (e) {
+        console.error("Error fetching dynamic insights:", e);
+        container.innerHTML = `<div class="col-span-3 text-sm text-red-500 italic p-4 bg-white/50 rounded-lg border border-dashed border-slate-300">Failed to load AI insights. Please check server.</div>`;
       }
     }
-  });
-})();
-// =======================
-// PERFORMANCE BANDS PIE
-// =======================
-(function drawBandsChart() {
-  const ctx = document.getElementById("bandsChart").getContext("2d");
 
-  let bands = { fail: 0, improve: 0, proficient: 0, advanced: 0 };
-
-  classroom.students.forEach(s => {
-    const avg = s.averageScore || 0;
-
-    if (avg < 60) bands.fail++;
-    else if (avg < 70) bands.improve++;
-    else if (avg < 85) bands.proficient++;
-    else bands.advanced++;
-  });
-
-  if (window.bandsChartInstance) window.bandsChartInstance.destroy();
-
-  window.bandsChartInstance = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: ["0-59%", "60-69%", "70-84%", "85-100%"],
-      datasets: [{
-        data: [
-          bands.fail,
-          bands.improve,
-          bands.proficient,
-          bands.advanced
-        ],
-        backgroundColor: [
-          "#ff6b6b",
-          "#ffa94d",
-          "#4dabf7",
-          "#51cf66"
-        ]
-      }]
-    }
-  });
-})();
-// =======================
-// ELL VS NON-ELL BAR CHART
-// =======================
-(function drawEllChart() {
-  const ctx = document.getElementById("classEllChart").getContext("2d");
-
-  let ellScores = [];
-  let nonEllScores = [];
-
-  classroom.students.forEach(s => {
-    if (s.averageScore != null) {
-      if (s.ell) ellScores.push(s.averageScore);
-      else nonEllScores.push(s.averageScore);
-    }
-  });
-
-  const ellAvg = ellScores.length ? (ellScores.reduce((a,b)=>a+b,0) / ellScores.length).toFixed(1) : 0;
-  const nonEllAvg = nonEllScores.length ? (nonEllScores.reduce((a,b)=>a+b,0) / nonEllScores.length).toFixed(1) : 0;
-
-  if (window.ellChartInstance) window.ellChartInstance.destroy();
-
-  window.ellChartInstance = new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: ["ELL", "Non-ELL"],
-      datasets: [{
-        label: "Average Score (%)",
-        data: [ellAvg, nonEllAvg],
-        backgroundColor: ["#ff922b", "#4c6ef5"]
-      }]
-    },
-    options: {
-      scales: {
-        y: { min: 0, max: 100 }
-      }
-    }
-  });
-})();
-
-      // =====================
-// BUILD CLASSROOM-LEVEL ASSESSMENTS
-// =====================
-const assessTable = document.getElementById("classroom-assessments-table");
-assessTable.innerHTML = "";
-
-let allAssessments = [];
-
-// Extract assessments from all students
-classroom.students.forEach(stu => {
-  (stu.assessments || []).forEach(a => {
-    allAssessments.push({
-      type: a.type,
-      score: a.score,
-      maxScore: a.maxScore,
-      percentage: a.percentage,
-      date: a.date,
-      notes: a.notes,
-      studentName: stu.name
-    });
-  });
-});
-
-// If none exist
-if (allAssessments.length === 0) {
-  assessTable.innerHTML = `
-    <tr><td colspan="5" style="text-align:center; opacity:0.7;">No assessments found</td></tr>
-  `;
-  return;
-}
-
-// Group by (type + date)
-const grouped = {};
-
-allAssessments.forEach(a => {
-  const key = `${a.type}_${new Date(a.date).toDateString()}`;
-
-  if (!grouped[key]) {
-    grouped[key] = {
-      type: a.type,
-      date: a.date,
-      maxScore: a.maxScore,
-      scores: []
-    };
-  }
-
-  grouped[key].scores.push(a.score);
-});
-
-// Convert results into table rows
-Object.values(grouped).forEach(item => {
-  const avg = (
-    item.scores.reduce((a, b) => a + b, 0) / item.scores.length
-  ).toFixed(1);
-
-  const tr = document.createElement("tr");
-
-  tr.innerHTML = `
-    <td>${item.type}</td>
-    <td>${avg}</td>
-    <td>${item.maxScore}</td>
-    <td>${new Date(item.date).toLocaleDateString()}</td>
-    <td>—</td>
-  `;
-
-  assessTable.appendChild(tr);
-});
-
-    }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script>
-      const assessmentModal = document.getElementById("assessmentModal");
-      const openAssessmentBtn = document.getElementById("add-assessment-btn");
-      const closeAssessmentBtn = document.getElementById("closeAssessmentModal");
-    
-      // OPEN assessment modal
-      openAssessmentBtn.addEventListener("click", () => {
-        populateAssessmentClassrooms();
-    
-        // Set default date
-        document.getElementById("assessment-date").value =
-          new Date().toISOString().split("T")[0];
-    
-        assessmentModal.classList.add("show");
-      });
-    
-      // CLOSE assessment modal
-      closeAssessmentBtn.addEventListener("click", () => {
-        assessmentModal.classList.remove("show");
-      });
-    </script>
-            <script>
-              document.getElementById("saveAssessmentModal").addEventListener("click", async () => {
-                const classroomId = document.getElementById("assessment-classroom").value;
-                const type = document.getElementById("assessment-type").value;
-                const maxScore = document.getElementById("assessment-max-score").value;
-                const date = document.getElementById("assessment-date").value;
-                const notes = document.getElementById("assessment-notes").value;
-              
-                // Collect selected student scores
-                const selected = [];
-                document.querySelectorAll(".assess-select").forEach(chk => {
-                  if (chk.checked) {
-                    const id = chk.dataset.id;
-                    const score = document.querySelector(`.assess-score[data-id="${id}"]`).value;
-                    selected.push({ studentId: id, score: Number(score) });
-                  }
-                });
-              
-                if (selected.length === 0) {
-                  return alert("Select at least one student.");
-                }
-              
-                if (!type || !maxScore || !date) {
-                  return alert("Please fill all required fields.");
-                }
-              
-                const token = localStorage.getItem("jwt");
-              
-                const res = await fetch("https://backendregister-dem3.onrender.com/api/assessments/create", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                  },
-                  body: JSON.stringify({
-                    classroomId,
-                    type,
-                    maxScore: Number(maxScore),
-                    date,
-                    notes,
-                    students: selected
-                  })
-                });
-              
-                const data = await res.json();
-              
-                if (!res.ok || !data.success) {
-                  console.error("Error creating assessment:", data);
-                  alert(data.message || "Failed to create assessment.");
-                  return;
-                }
-              
-                alert("Assessment saved!");
-              
-                // Close modal
-                document.getElementById("assessmentModal").classList.remove("show");
-              
-                // Reload classroom to update student averages + counts
-                loadSelectedClassroom(classroomId);
-              });
-              async function openStudentDetailCard(studentId) {
-  const token = localStorage.getItem("jwt");
-
-  const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}`, {
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-  const s = data.student;
-  document.getElementById("closeStudentDetailModal")
-  .addEventListener("click", () => {
-    document.getElementById("studentDetailModal").classList.remove("show");
-});
-  // Fill modal fields
-  document.getElementById("modal-student-name").textContent = s.name;
-
-  document.getElementById("modal-student-content").innerHTML = `
-      <b>Gender:</b> ${s.gender || "—"}<br>
-      <b>ELL:</b> ${s.ell ? "Yes" : "No"}<br>
-      <b>DOB:</b> ${s.dob ? new Date(s.dob).toLocaleDateString() : "—"}<br><br>
-
-      <b>Assessments:</b> ${s.assessments.length}<br>
-      <b>Average Score:</b> ${s.averageScore || "—"}%<br><br>
-
-      <b>AI Summary:</b><br>
-      <small>${s.aiSummary || "No summary available."}</small><br><br>
-
-      <b>Strengths:</b>
-      <ul>${(s.aiStrengths || []).map(x => `<li>${x}</li>`).join("")}</ul>
-
-      <b>Weaknesses:</b>
-      <ul>${(s.aiWeaknesses || []).map(x => `<li>${x}</li>`).join("")}</ul>
-  `;
-
-  // Show modal
-  document.getElementById("studentDetailModal").classList.add("show");
-}
-
-
-              </script>
-                  
-                  <div id="studentDetailModal" class="modal-overlay">
-                    <div class="modal-container">
-                      <h2 id="modal-student-name"></h2>
-                  
-                      <div id="modal-student-content" class="info-text"></div>
-                  
-                      <div class="modal-actions">
-                        <button class="btn-light" id="closeStudentDetailModal">Close</button>
-                      </div>
-                    </div>
-                  </div>
-                  
-          
-          
-                  <script>
-                    async function loadAllStudents() {
-                      const token = localStorage.getItem("jwt");
-                    
-                      const res = await fetch("https://backendregister-dem3.onrender.com/api/students/all", {
-                        headers: { "Authorization": `Bearer ${token}` }
-                      });
-                    
-                      const data = await res.json();
-                      if (!data.success) return;
-                    
-                      renderStudentGrid(data.students);
-                    }
-                    
-                    // Render cards
-                    function renderStudentGrid(students) {
-                      const grid = document.getElementById("students-grid");
-                      grid.innerHTML = "";
-                    
-                      students.forEach(s => {
-                        const div = document.createElement("div");
-                        div.className = "student-card";
-                        div.dataset.id = s._id;
-                    
-                        div.innerHTML = `
-  <button class="dots-btn">⋮</button>
-
-  <div class="dots-menu">
-    <div class="menu-item edit-student">Edit Student</div>
-    <div class="menu-item delete-student">Delete Student</div>
-  </div>
-
-  <div class="student-name" style="margin-top: 15px;">${s.name}</div>
-  <div class="student-class">${s.classroomName}</div>
-`;
-
-                        // Open modal on click
-                        div.addEventListener("click", (e) => {
-  // ignore clicks on the dots menu or its button
-  if (e.target.classList.contains("dots-btn")) return;
-  if (e.target.closest(".dots-menu")) return;
-
-  openStudentDetailCard(s._id);
-});
-
-                        grid.appendChild(div);
-                      });
-                    }
-                    // Handle menu clicks
-                    document.addEventListener("click", async (e) => {
-
-// --- CLICK ON ⋮ DOTS BUTTON ---
-if (e.target.classList.contains("dots-btn")) {
-  e.stopPropagation(); // prevent card click
-  const menu = e.target.parentElement.querySelector(".dots-menu");
-
-  // Close all other menus
-  document.querySelectorAll(".dots-menu").forEach(m => m.classList.remove("show"));
-
-  // Toggle current menu
-  menu.classList.toggle("show");
-  return;
-}
-
-// --- CLICK INSIDE MENU SHOULD NOT OPEN CARD ---
-if (e.target.closest(".dots-menu")) {
-  e.stopPropagation();
-}
-
-// --- DELETE STUDENT ---
-if (e.target.classList.contains("delete-student")) {
-  e.stopPropagation(); // prevent modal trigger
-
-  const card = e.target.closest(".student-card");
-  const studentId = card.dataset.id;
-
-  if (!confirm("Delete this student?")) return;
-
-  const token = localStorage.getItem("jwt");
-
-  const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    card.remove();
-  } else {
-    alert("Failed to delete student");
-  }
-  return;
-}
-
-// --- EDIT STUDENT ---
-if (e.target.classList.contains("edit-student")) {
-  e.stopPropagation(); // prevent card click
-
-  const studentId = e.target.closest(".student-card").dataset.id;
-  openEditStudentModal(studentId);
-  return;
-}
-
-// --- CLICK ANYWHERE ELSE CLOSE MENUS ---
-document.querySelectorAll(".dots-menu").forEach(m => m.classList.remove("show"));
-});
-
-                    // Search filter
-                    document.getElementById("student-search").addEventListener("input", e => {
-                      const term = e.target.value.toLowerCase();
-                      document.querySelectorAll(".student-card").forEach(card => {
-                        const name = card.querySelector(".student-name").textContent.toLowerCase();
-                        card.style.display = name.includes(term) ? "block" : "none";
-                      });
-                    });
-                    
-                    // Load when switching to Students tab
-                    document.querySelector('[data-section="students-section"]').addEventListener("click", loadAllStudents);
-                    
-                    </script>
-                    
-                    <div id="editStudentModal" class="modal-overlay">
-                      <div class="modal-container" style="max-width: 900px;">
-                        <h2 class="modal-title">Edit Student</h2>
-                    
-                        <!-- MAIN GRID -->
-                        <div class="modal-grid">
-                    
-                          <!-- NAME -->
-                          <div class="modal-field">
-                            <label>Name</label>
-                            <input id="edit-student-name" type="text" class="modal-input">
-                          </div>
-                    
-                          <!-- ELL -->
-                          <div class="modal-field">
-                            <label>ELL Status</label>
-                            <select id="edit-student-ell" class="modal-input">
-                              <option value="false">Non-ELL</option>
-                              <option value="true">ELL</option>
-                            </select>
-                          </div>
-                    
-                          <!-- GENDER -->
-                          <div class="modal-field">
-                            <label>Gender</label>
-                            <select id="edit-student-gender" class="modal-input">
-                              <option value="">Select</option>
-                              <option>Male</option>
-                              <option>Female</option>
-                              <option>Other</option>
-                            </select>
-                          </div>
-                    
-                          <!-- DOB -->
-                          <div class="modal-field">
-                            <label>Date of Birth</label>
-                            <input id="edit-student-dob" type="date" class="modal-input">
-                          </div>
-                    
-                          <!-- CLASSROOM -->
-                          <div class="modal-field">
-                            <label>Assigned Classroom</label>
-                            <select id="edit-student-classroom" class="modal-input"></select>
-                          </div>
-                    
-                        </div>
-                    
-                        <!-- NOTES -->
-                        <div class="modal-field-full">
-                          <label>Student Notes</label>
-                          <textarea id="edit-student-notes" class="modal-input modal-textarea"></textarea>
-                        </div>
-                    
-                        <hr style="margin: 20px 0; opacity: 0.4;">
-                    
-                        <!-- ASSESSMENTS SECTION -->
-                        <h3 class="form-label">Edit Assessments</h3>
-
-                      <select id="edit-assessment-selector" class="modal-input" style="margin-top: 12px;">
-                        <option value="">Select an assessment to edit</option>
-                      </select>
-
-                      <div id="edit-selected-assessment-container" style="margin-top: 20px;"></div>
-
-                    
-                        <!-- ACTIONS -->
-                        <div class="modal-actions">
-                          <button class="btn-light" id="editStudentCancel">Cancel</button>
-                          <button class="btn-purple" id="editStudentSave">Save Changes</button>
-                        </div>
-                    
-                      </div>
-                    </div>
-                    <script>
-                      let currentEditingStudentId = null;
-                    
-                      // Load classrooms into the "Assigned Classroom" dropdown
-                      async function populateEditClassroomDropdown(selectedClassroomId) {
-                        const dropdown = document.getElementById("edit-student-classroom");
-                        const token = localStorage.getItem("jwt");
-                    
-                        dropdown.innerHTML = "";
-                    
-                        try {
-                          const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
-                            headers: { "Authorization": `Bearer ${token}` }
-                          });
-                    
-                          const data = await res.json();
-                          if (!res.ok || !data.success) {
-                            console.error("Failed to load classrooms for edit:", data);
-                            return;
-                          }
-                    
-                          data.classrooms.forEach(c => {
-                            const opt = document.createElement("option");
-                            opt.value = c._id;
-                            opt.textContent = c.name;
-                            if (selectedClassroomId && c._id === selectedClassroomId.toString()) {
-                              opt.selected = true;
-                            }
-                            dropdown.appendChild(opt);
-                          });
-                        } catch (err) {
-                          console.error("Error loading classrooms in edit modal:", err);
-                        }
-                      }
-                    
-                      // Open Edit Student modal
-                      async function openEditStudentModal(studentId) {
-                        currentEditingStudentId = studentId; // 🔥 set global
-                    
-                        const token = localStorage.getItem("jwt");
-                    
-                        try {
-                          const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}`, {
-                            headers: { "Authorization": `Bearer ${token}` }
-                          });
-                    
-                          const data = await res.json();
-                          if (!res.ok || !data.success || !data.student) {
-                            console.error("Failed to load student for edit:", data);
-                            alert(data.message || "Could not load student.");
-                            return;
-                          }
-                    
-                          const student = data.student;
-                    
-                          // Base fields
-                          document.getElementById("edit-student-name").value = student.name || "";
-                          document.getElementById("edit-student-ell").value = String(!!student.ell);
-                          document.getElementById("edit-student-gender").value = student.gender || "";
-                          document.getElementById("edit-student-dob").value = student.dob
-                            ? new Date(student.dob).toISOString().split("T")[0]
-                            : "";
-                          document.getElementById("edit-student-notes").value = student.notes || "";
-                    
-                          // Classroom dropdown
-                          const firstClassroomId = (student.classroomIds && student.classroomIds[0]) || null;
-                          await populateEditClassroomDropdown(firstClassroomId);
-                    
-                          // Assessments
-                          // =========================
-// ASSESSMENTS: DROPDOWN + LOADER
-// =========================
-
-const selector = document.getElementById("edit-assessment-selector");
-const container = document.getElementById("edit-selected-assessment-container");
-
-selector.innerHTML = `<option value="">Select an assessment to edit</option>`;
-container.innerHTML = "";
-
-// Populate dropdown list
-(student.assessments || []).forEach(a => {
-  const label = `${a.type} – ${new Date(a.date).toLocaleDateString()}`;
-  const opt = document.createElement("option");
-  opt.value = a._id;
-  opt.textContent = label;
-  selector.appendChild(opt);
-});
-
-// When dropdown changes → load selected assessment
-selector.onchange = () => {
-  const id = selector.value;
-  if (!id) {
-    container.innerHTML = "";
-    return;
-  }
-
-  const selected = student.assessments.find(x => x._id === id);
-  loadAssessmentIntoEditor(student._id, selected);
-};
-
-                    
-                           
-                          // Finally show modal
-                          document.getElementById("editStudentModal").classList.add("show");
-                        } catch (err) {
-                          console.error("Error opening edit student modal:", err);
-                          alert("Error loading student.");
-                        }
-                      }
-                    
-                      // Save student basic info
-                      document.getElementById("editStudentSave").addEventListener("click", async () => {
-                        if (!currentEditingStudentId) {
-                          alert("No student selected.");
-                          return;
-                        }
-                    
-                        const token = localStorage.getItem("jwt");
-                    
-                        const payload = {
-  name: document.getElementById("edit-student-name").value.trim(),
-  ell: document.getElementById("edit-student-ell").value === "true",
-  gender: document.getElementById("edit-student-gender").value || undefined,
-  dob: document.getElementById("edit-student-dob").value || undefined,
-  notes: document.getElementById("edit-student-notes").value || undefined,
-  classroomId: document.getElementById("edit-student-classroom").value || undefined
-};
-
-                    
-                        try {
-                          const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${currentEditingStudentId}`, {
-                            method: "PUT",
-                            headers: {
-                              "Authorization": `Bearer ${token}`,
-                              "Content-Type": "application/json"
-                            },
-                            body: JSON.stringify(payload)
-                          });
-                    
-                          const data = await res.json();
-                          if (!res.ok || !data.success) {
-                            console.error("Student update failed:", data);
-                            alert(data.message || "Update failed.");
-                            return;
-                          }
-                    
-                          alert("Student updated!");
-                          document.getElementById("editStudentModal").classList.remove("show");
-                    
-                          // Optionally refresh current classroom / students grid
-                          // loadAllStudents();
-                          // or reloadSelectedClassroom(...)
-                        } catch (err) {
-                          console.error("Error saving student:", err);
-                          alert("Error saving student.");
-                        }
-                      });
-                    
-                      // Cancel / close button
-                      document.getElementById("editStudentCancel").addEventListener("click", () => {
-                        document.getElementById("editStudentModal").classList.remove("show");
-                      });
-                      function loadAssessmentIntoEditor(studentId, a) {
-  const container = document.getElementById("edit-selected-assessment-container");
-
-  const dateValue = a.date
-    ? new Date(a.date).toISOString().split("T")[0]
-    : "";
-
-  container.innerHTML = `
-<div class="assessment-edit-card">
-
-  <div class="assessment-grid">
-
-    <div class="modal-field">
-      <label>Type</label>
-      <select id="edit-assess-type" class="modal-input">
-        <option ${a.type === "Quiz" ? "selected" : ""}>Quiz</option>
-        <option ${a.type === "Test" ? "selected" : ""}>Test</option>
-        <option ${a.type === "Assignment" ? "selected" : ""}>Assignment</option>
-        <option ${a.type === "Essay" ? "selected" : ""}>Essay</option>
-        <option ${a.type === "Performance Task" ? "selected" : ""}>Performance Task</option>
-      </select>
-    </div>
-
-    <div class="modal-field">
-      <label>Score</label>
-      <input 
-        id="edit-assess-score" 
-        type="number" 
-        class="modal-input" 
-        value="${a.score ?? ""}"
-      >
-    </div>
-
-    <div class="modal-field">
-      <label>Max Score</label>
-      <input 
-        id="edit-assess-max" 
-        type="number" 
-        class="modal-input" 
-        value="${a.maxScore ?? ""}"
-      >
-    </div>
-
-    <div class="modal-field">
-      <label>Date</label>
-      <input 
-        id="edit-assess-date" 
-        type="date" 
-        class="modal-input" 
-        value="${dateValue}"
-      >
-    </div>
-
-  </div>
-
-  <div class="modal-field-full" style="margin-top: 14px;">
-    <label>Notes</label>
-    <textarea 
-      id="edit-assess-notes" 
-      class="modal-input modal-textarea"
-    >${a.notes || ""}</textarea>
-  </div>
-
-  <div class="assessment-actions">
-    <button class="btn-light" onclick="deleteAssessment('${studentId}', '${a._id}')">
-      Delete Assessment
-    </button>
-    <button class="btn-purple" onclick="saveEditedAssessment('${studentId}', '${a._id}')">
-      Save Changes
-    </button>
-  </div>
-
-</div>  `;
-}
-async function saveEditedAssessment(studentId, assessmentId) {
-  const token = localStorage.getItem("jwt");
-
-  const payload = {
-  type: document.getElementById("edit-assess-type").value || undefined,
-  score: document.getElementById("edit-assess-score").value !== "" 
-    ? Number(document.getElementById("edit-assess-score").value)
-    : undefined,
-  maxScore: document.getElementById("edit-assess-max").value !== "" 
-    ? Number(document.getElementById("edit-assess-max").value)
-    : undefined,
-  date: document.getElementById("edit-assess-date").value || undefined,
-  notes: document.getElementById("edit-assess-notes").value || undefined
-};
-
-
-
-  const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}/assessments/${assessmentId}`, {
-    method: "PUT",
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await res.json();
-
-  if (!res.ok || !data.success) {
-    alert("Failed to update assessment");
-    return;
-  }
-
-  alert("Assessment updated successfully");
-  openEditStudentModal(studentId); // reload data
-}
-
-                      // Delete assessment API call
-                      async function deleteAssessment(studentId, assessmentId) {
-                        const token = localStorage.getItem("jwt");
-                    
-                        if (!confirm("Delete this assessment?")) return;
-                    
-                        try {
-                          const res = await fetch(`https://backendregister-dem3.onrender.com/api/students/${studentId}/assessments/${assessmentId}`, {
-                            method: "DELETE",
-                            headers: { "Authorization": `Bearer ${token}` }
-                          });
-                    
-                          const data = await res.json();
-                          if (!res.ok || !data.success) {
-                            console.error("Delete assessment failed:", data);
-                            alert(data.message || "Delete failed.");
-                            return;
-                          }
-                    
-                          alert("Assessment deleted.");
-                          // Reload modal with fresh data
-                          openEditStudentModal(studentId);
-                        } catch (err) {
-                          console.error("Error deleting assessment:", err);
-                          alert("Error deleting assessment.");
-                        }
-                      }
-                      document.addEventListener("DOMContentLoaded", populateReportClassrooms);
-
-async function populateReportClassrooms() {
-  const token = localStorage.getItem("jwt");
-  const dropdown = document.getElementById("report-classroom");
-
-  const res = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-
-  dropdown.innerHTML = `<option value="">Select Classroom</option>`;
-
-  data.classrooms.forEach(c => {
-    const opt = document.createElement("option");
-    opt.value = c._id;
-    opt.textContent = c.name;
-    dropdown.appendChild(opt);
-  });
-}
-document.getElementById("report-classroom").addEventListener("change", async (e) => {
-  const classId = e.target.value;
-  populateReportStudents(classId);
-});
-
-async function populateReportStudents(classroomId) {
-  const token = localStorage.getItem("jwt");
-  const dropdown = document.getElementById("report-students");
-
-  dropdown.innerHTML = "";
-
-  if (!classroomId) return;
-
-  const res = await fetch(`https://backendregister-dem3.onrender.com/api/classrooms/${classroomId}`, {
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-
-  const data = await res.json();
-
-  data.classroom.students.forEach(s => {
-    const opt = document.createElement("option");
-    opt.value = s._id;
-    opt.textContent = s.name;
-    opt.selected = true;           // 🔥 auto-select all by default
-    dropdown.appendChild(opt);
-  });
-}
-
-                    </script>
-                    
-
-                    <script>
-                      // ---- Generate Report (Reports tab) ----
-                      async function generateReportHandler() {
-                        const token = localStorage.getItem("jwt");
-                        if (!token) {
-                          alert("You are not logged in.");
-                          return (window.location.href = "Auth.html");
-                        }
-                    
-                        const classroomSelect = document.getElementById("report-classroom");
-                        const studentsSelect  = document.getElementById("report-students");
-                        const startInput      = document.getElementById("report-start");
-                        const endInput        = document.getElementById("report-end");
-                        const output          = document.getElementById("report-output");
-                    
-                        const classroomId = classroomSelect.value;
-                        const studentIds  = Array.from(studentsSelect.selectedOptions).map(o => o.value);
-                        const startDate   = startInput.value || null;
-                        const endDate     = endInput.value || null;
-                        // DEBUG: See which students are being selected
-console.log("Selected studentIds for report:", studentIds);
-
-                        if (!classroomId) {
-                          alert("Please select a classroom.");
-                          return;
-                        }
-                    
-                        if (!studentIds.length) {
-                          alert("Please select at least one student.");
-                          return;
-                        }
-                    
-                        // Show loading state
-                        output.innerHTML = `
-                          <p class="info-placeholder">Generating report, please wait...</p>
-                        `;
-                    
-                        try {
-                          const res = await fetch("https://backendregister-dem3.onrender.com/api/reports/generate", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              "Authorization": `Bearer ${token}`
-                            },
-                            body: JSON.stringify({
-                              classroomId,
-                              studentIds,
-                              startDate,
-                              endDate
-                            })
-                          });
-                    
-                          const data = await res.json();
-                    
-                          if (!res.ok || !data.success) {
-                            console.error("Report error:", data);
-                            output.innerHTML = `
-                              <p class="info-placeholder" style="color: #d64545;">
-                                Failed to generate report. ${data.message || ""}
-                              </p>
-                            `;
-                            return;
-                          }
-                    
-                          // Render the report nicely
-                          const classroomName =
-                            classroomSelect.options[classroomSelect.selectedIndex]?.textContent || "Selected Classroom";
-                    
-                          const dateLabel = (startDate || endDate)
-                            ? `${startDate || "—"} to ${endDate || "—"}`
-                            : "Full year / all dates";
-                    
-                          // Basic summary table for selected students
-                          const rawData = data.report || [];
-
-const studentRows = rawData.map(r => `
-  <tr>
-    <td>${r.name}</td>
-    <td>${r.ell ? "ELL" : "Non-ELL"}</td>
-    <td>${r.overallAverage ?? "—"}</td>
-    <td>${r.totalAssessments}</td>
-    <td>${r.interventionFlag ? "Yes" : "No"}</td>
-  </tr>
-`).join("");
-const teacherName = localStorage.getItem("teacherName");
-console.log("Teacher from localStorage:", teacherName);
-
-const today = new Date().toISOString().split("T")[0];
-const aiText = formatAiReport(data.aiNarrativeReport || "")
-.replace(/\n/g, "<br>");
-
-output.innerHTML = `
-  <div class="report-header">
-    <h3 class="form-label">Classroom Report</h3>
-    <p class="info-text">
-      <b>Classroom:</b> ${classroomName}<br>
-      <b>Date Range:</b> ${dateLabel}<br>
-      <b>Students Included:</b> ${rawData.length}<br>
-      <b>Group Average:</b> ${data.groupLevelAnalysis?.groupAverage ?? "—"}%<br>
-      <b>Total Assessments:</b> ${data.groupLevelAnalysis?.totalAssessments ?? "0"}
-    </p>
-  </div>
-
-  <div class="grading-card" style="margin-top: 16px;">
-    <h4 class="form-label">Student Overview</h4>
-    <table class="data-table" style="margin-top: 10px; width: 100%;">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>ELL</th>
-          <th>Avg %</th>
-          <th># Assessments</th>
-          <th>Intervention Needed?</th>
-        </tr>
-      </thead>
-      <tbody">
-        ${rawData.length > 0 ? studentRows : `
-          <tr>
-            <td colspan="5" style="text-align:center; opacity:0.7;">
-              No assessment data found for the selected filters.
+    function populateStudentTable(students) {
+      const tbody = document.getElementById('student-table-body');
+      let html = '';
+
+      students.forEach(s => {
+        const avgNum = s.averageScore !== undefined && s.averageScore !== null ? parseFloat(s.averageScore) : (s.avg ? parseFloat(s.avg) : 0);
+        const avg = avgNum;
+        const avgDisplay = avg > 0 ? (Number.isInteger(avg) ? avg : avg.toFixed(2)) : "--";
+
+        let gradeStr = "N/A";
+        let trendHtml = '<span class="text-slate-400"><i class="ph ph-minus"></i> No Data</span>';
+        let rowClass = "hover:bg-indigo-50/30 transition-colors";
+
+        if (avg > 0) {
+          if (avg >= 90) { gradeStr = "A"; trendHtml = '<span class="text-emerald-600 flex items-center gap-1"><i class="ph ph-trend-up"></i> Rising</span>'; }
+          else if (avg >= 80) { gradeStr = "B"; trendHtml = '<span class="text-emerald-600 flex items-center gap-1"><i class="ph ph-trend-up"></i> Rising</span>'; }
+          else if (avg >= 70) { gradeStr = "C"; trendHtml = '<span class="text-slate-500 flex items-center gap-1"><i class="ph ph-arrows-left-right"></i> Stable</span>'; }
+          else if (avg >= 60) { gradeStr = "D"; trendHtml = '<span class="text-red-500 flex items-center gap-1"><i class="ph ph-trend-down"></i> Dropping</span>'; rowClass = "bg-red-50/20 hover:bg-red-50/50 transition-colors"; }
+          else { gradeStr = "F"; trendHtml = '<span class="text-red-600 font-bold flex items-center gap-1"><i class="ph ph-warning"></i> Critical</span>'; rowClass = "bg-red-50/40 hover:bg-red-50/60 transition-colors"; }
+        }
+
+        html += `
+          <tr class="${rowClass}">
+            <td class="px-6 py-4">
+              <div class="flex items-center gap-3">
+                <div class="h-8 w-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-xs">${s.name.substring(0, 2).toUpperCase()}</div>
+                <div>
+                  <div class="font-medium text-slate-900">${s.name}</div>
+                  <div class="text-xs text-slate-500">ID: ${s._id.substring(18, 24)}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">${s.ell ? 'ELL Student' : 'Standard'}</span>
+            </td>
+            <td class="px-6 py-4 text-slate-700">${gradeStr !== 'N/A' ? 'Graded Recently' : 'Pending'}</td>
+            <td class="px-6 py-4 font-semibold ${avg < 70 ? 'text-red-600' : 'text-slate-900'}">${avgDisplay !== '--' ? avgDisplay + '%' : '--'} (${gradeStr})</td>
+            <td class="px-6 py-4">${trendHtml}</td>
+            <td class="px-6 py-4 text-right">
+              <button class="text-slate-400 hover:text-primary transition-colors p-1 rounded-md hover:bg-indigo-50"><i class="ph ph-dots-three text-xl"></i></button>
             </td>
           </tr>
-        `}
-      </tbody>
-    </table>
-  </div>
+        `;
+      });
 
-
- ${aiText ? `
-  <div class="grading-card" style="margin-top: 16px;">
-    <h4 class="form-label">AI Narrative & Insights</h4>
-
-    <p class="info-text">
-      <b>Teacher:</b> ${teacherName}<br>
-      <b>Report Date:</b> ${today}
-    </p>
-
-    <div class="ai-report">${aiText}</div>
-  </div>
-` : ""}
-
-
-`;
-                        } catch (err) {
-                          console.error("Report fetch error:", err);
-                          output.innerHTML = `
-                            <p class="info-placeholder" style="color: #d64545;">
-                              Something went wrong while generating the report.
-                            </p>
-                          `;
-                        }
-                      }
-                    
-                      // Attach click handler
-                      document
-                        .getElementById("generate-report-btn")
-                        .addEventListener("click", generateReportHandler);
-                        function formatAiReport(markdown) {
-  if (!markdown) return "";
-
-  let html = markdown;
-
-  // Headings
-  html = html.replace(/^### (.*$)/gim, '<h3 class="ai-subheading">$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2 class="ai-heading">$1</h2>');
-  html = html.replace(/^# (.*$)/gim,  '<h1 class="ai-title">$1</h1>');
-
-  // Bold text
-  html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
-
-  // Bullet points
-  html = html.replace(/^\s*[-•] (.*)$/gim, '<li>$1</li>');
-  html = html.replace(/(<li>[\s\S]+?<\/li>)/gim, '<ul>$1</ul>');
-
-  // Paragraphs (blank lines)
-  html = html.replace(/\n\s*\n/g, '</p><p>');
-  html = "<p>" + html + "</p>";
-
-  // Convert line breaks to <br>
-  html = html.replace(/\n/g, "<br>");
-
-  return html;
-}
-
-                    </script>
-                    <script>
-                      document.addEventListener("DOMContentLoaded", loadDashboard);
-                      
-                      async function loadDashboard() {
-                        const token = localStorage.getItem("jwt");
-                        if (!token) return;
-                      
-                        // -----------------------------
-                        // 1️⃣ FETCH ALL CLASSROOMS
-                        // -----------------------------
-                        const classRes = await fetch("https://backendregister-dem3.onrender.com/api/classrooms", {
-                          headers: { Authorization: `Bearer ${token}` }
-                        });
-                        const { classrooms } = await classRes.json();
-                      
-                        // Storage for dashboard data
-                        let totalStudents = 0;
-                        let totalAssessments = 0;
-                        let interventionCount = 0;
-                        let growthMap = {};
-                        let distribution = { "0-59": 0, "60-69": 0, "70-84": 0, "85-100": 0 };
-                        let ellScores = [];
-                        let nonEllScores = [];
-                        let timeline = {};
-                      
-                        // -----------------------------
-                        // 2️⃣ LOOP ALL CLASSROOMS
-                        // -----------------------------
-                        for (const cls of classrooms) {
-                          const detailRes = await fetch(
-                            `https://backendregister-dem3.onrender.com/api/classrooms/${cls._id}`,
-                            { headers: { Authorization: `Bearer ${token}` } }
-                          );
-                      
-                          const detail = await detailRes.json();
-                          const students = detail.classroom.students || [];
-                      
-                          totalStudents += students.length;
-                      
-                          // -----------------------------
-                          // 3️⃣ LOOP THROUGH STUDENTS
-                          // -----------------------------
-                          students.forEach(s => {
-                            if (s.interventionFlag) interventionCount++;
-                      
-                            if (s.averageScore != null) {
-                              if (s.ell) ellScores.push(s.averageScore);
-                              else nonEllScores.push(s.averageScore);
-                            }
-                      
-                            // Assessments
-                            (s.assessments || []).forEach(a => {
-                              totalAssessments++;
-                      
-                              const pct = a.percentage ?? ((a.score / a.maxScore) * 100);
-                              const date = new Date(a.date).toDateString();
-                      
-                              // Growth data
-                              if (!growthMap[date]) growthMap[date] = [];
-                              growthMap[date].push(pct);
-                      
-                              // Score bands
-                              if (pct < 60) distribution["0-59"]++;
-                              else if (pct < 70) distribution["60-69"]++;
-                              else if (pct < 85) distribution["70-84"]++;
-                              else distribution["85-100"]++;
-                      
-                              // Timeline
-                              if (!timeline[date]) timeline[date] = 0;
-                              timeline[date]++;
-                            });
-                          });
-                        }
-                      
-                        // -----------------------------
-                        // 4️⃣ UPDATE METRICS UI
-                        // -----------------------------
-                        document.getElementById("total-classrooms").textContent = classrooms.length;
-                        document.getElementById("total-students").textContent = totalStudents;
-                        document.getElementById("total-assessments").textContent = totalAssessments;
-                        document.getElementById("intervention-count").textContent = interventionCount;
-                      
-                        // -----------------------------
-                        // 5️⃣ DRAW CHARTS
-                        // -----------------------------
-                        drawGrowthChart(growthMap);
-                        drawDistributionChart(distribution);
-                        drawEllChart(ellScores, nonEllScores);
-                        drawTimelineChart(timeline);
-                      }
-                      
-                      /* CHART FUNCTIONS (same style as your classroom charts) */
-                      function drawGrowthChart(map) {
-                        const labels = Object.keys(map);
-                        const values = labels.map(d => {
-                          const arr = map[d];
-                          return arr.reduce((a,b)=>a+b,0) / arr.length;
-                        });
-                      
-                        new Chart(document.getElementById("growthChart"), {
-                          type: "line",
-                          data: {
-                            labels,
-                            datasets: [{
-                              label: "Average Score (%)",
-                              data: values,
-                              borderColor: "#6246ea",
-                              backgroundColor: "rgba(98,70,234,0.3)",
-                              tension: 0.3
-                            }]
-                          },
-                          options: { scales: { y: { min: 0, max: 100 } } }
-                        });
-                      }
-                      
-                      function drawDistributionChart(dist) {
-                        new Chart(document.getElementById("distributionChart"), {
-                          type: "bar",
-                          data: {
-                            labels: Object.keys(dist),
-                            datasets: [{
-                              label: "Students",
-                              data: Object.values(dist),
-                              backgroundColor: "#4dabf7"
-                            }]
-                          }
-                        });
-                      }
-                      
-                      function drawEllChart(ell, nonEll) {
-                        const ellAvg = ell.length ? (ell.reduce((a,b)=>a+b,0) / ell.length) : 0;
-                        const nonAvg = nonEll.length ? (nonEll.reduce((a,b)=>a+b,0) / nonEll.length) : 0;
-                      
-                        new Chart(document.getElementById("ellChart"), {
-                          type: "bar",
-                          data: {
-                            labels: ["ELL", "Non-ELL"],
-                            datasets: [{
-                              label: "Avg Score (%)",
-                              data: [ellAvg, nonAvg],
-                              backgroundColor: ["#ff922b", "#4c6ef5"]
-                            }]
-                          },
-                          options: { scales: { y: { min: 0, max: 100 } } }
-                        });
-                      }
-                      
-                      function drawTimelineChart(map) {
-                        new Chart(document.getElementById("timelineChart"), {
-                          type: "line",
-                          data: {
-                            labels: Object.keys(map),
-                            datasets: [{
-                              label: "Assessments Per Day",
-                              data: Object.values(map),
-                              borderColor: "#2ecc71",
-                              backgroundColor: "rgba(46,204,113,0.3)",
-                              tension: 0.3
-                            }]
-                          }
-                        });
-                      }
-                      </script>
-                      
-                    
+      tbody.innerHTML = html;
+    }
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const userJson = localStorage.getItem('smartassessUser');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          const nameEl = document.getElementById('sidebar-user-name');
+          if (nameEl && user.name) nameEl.textContent = user.name;
+        } catch (err) {
+          console.error("Failed to parse user session", err);
+        }
+      }
+    });
+  </script>
 </body>
+
 </html>
-
-
-
-

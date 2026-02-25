@@ -1,123 +1,451 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Smart Assess – Lesson Plan Generator</title>
-  <link rel="stylesheet" href="lessonplan.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <title>Smart Assess – Lesson View</title>
+
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <link rel="icon" href="logo.svg" type="image/svg+xml" />
+  <script src="config.js"></script>
+
+  <style>
+    /* Specific overrides */
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    /* Print Styles */
+    @media print {
+      @page {
+        margin: 1cm;
+      }
+
+      html,
+      body {
+        height: auto !important;
+        overflow: visible !important;
+        background: white !important;
+      }
+
+      .app-sidebar,
+      .left-panel,
+      .top-bar,
+      #preview-empty,
+      #time-est,
+      #loader {
+        display: none !important;
+      }
+
+      .app-main,
+      .right-panel,
+      #doc-scroll-area,
+      #preview-card {
+        display: block !important;
+        position: static !important;
+        height: auto !important;
+        min-height: auto !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        max-width: none !important;
+        background: white !important;
+      }
+
+      #doc-content {
+        padding: 0 !important;
+      }
+
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
-    <div class="navbar-wrapper">
-  <header class="navbar">
-    <div class="navbar-content">
-      <div class="logo-container">
-        <img src="logo.svg" alt="Smart Assess Logo" class="logo-img" style="height: 60px; width: 80px" />
-      </div>
-      <div class="nav-actions">
-        <button onclick="window.location.href='home.html'" class="btn-light">← Back to Grader</button>
+
+  <!-- SIDEBAR (Standardized) -->
+  <aside class="app-sidebar" style="z-index: 50;">
+    <div class="sidebar-header">
+      <img src="logo.svg" alt="Logo" class="sidebar-logo" />
+    </div>
+
+    <nav class="nav-links">
+      <div class="nav-category">Main</div>
+
+      <a href="home.html" class="nav-item">
+        <i class="ph ph-graduation-cap nav-icon"></i><span>Grader</span>
+      </a>
+
+      <a href="AssignmentGenerator.html" class="nav-item">
+        <i class="ph ph-files nav-icon"></i>
+        <span>Assignments</span>
+      </a>
+
+      <a href="lessonplan.html" class="nav-item active">
+        <i class="ph ph-chalkboard-teacher nav-icon"></i>
+        <span>Lesson Plans</span>
+      </a>
+
+      <a href="DataAnalyzer.html" class="nav-item">
+        <i class="ph ph-chart-bar nav-icon"></i>
+        <span>Data Analyzer</span>
+      </a>
+
+      <div class="nav-category">Library</div>
+      <!-- <a href="#" class="nav-item">
+        <i class="ph ph-folder nav-icon"></i>
+        <span>My Content</span>
+      </a> -->
+      <a href="roster.html" class="nav-item">
+        <i class="ph ph-users nav-icon"></i>
+        <span>Student Roster</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="avatar"
+          style="width:36px; height:36px; border-radius:10px; background:var(--brand-surface); display:flex; align-items:center; justify-content:center; color:var(--brand-primary); font-weight:bold;">
+          T
+        </div>
+        <div style="flex:1;">
+          <div id="sidebar-user-name" style="font-weight:600; font-size:0.9rem; color:var(--text-main);">Teacher</div>
+        </div>
+        <button onclick="localStorage.clear(); window.location.href='index.html'" class="btn-ghost" title="Sign Out"
+          style="padding:4px; margin-left: auto;">
+          <i class="ph ph-sign-out" style="font-size: 1.2rem;"></i>
+        </button>
       </div>
     </div>
-  </header>
-</div>
-  <main class="hero-container">
-    <section class="hero-content">
-      <h1 class="hero-title">Lesson Plan Generator</h1>
-      <p class="hero-subtitle">Quickly generate standards-aligned lesson plans with AI assistance.</p>
-    </section>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="app-main"
+    style="display:flex; padding:0; height:100vh; overflow:hidden; background:var(--brand-surface);">
+
+    <!-- LEFT PANEL: Configuration -->
+    <div class="left-panel"
+      style="width: 715px; min-width:450px; background:white; border-right:1px solid var(--surface-200); display:flex; flex-direction:column; overflow-y:auto; z-index:10; padding-bottom: 32px;">
+      <div style="padding:32px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 32px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div
+              style="width:40px; height:40px; border-radius:8px; background:var(--brand-surface); display:flex; align-items:center; justify-content:center; color:var(--brand-primary);">
+              <i class="ph ph-chalkboard-teacher" style="font-size:1.5rem;"></i>
+            </div>
+            <div>
+              <h2 style="font-size:1.1rem; font-weight:700; color:var(--text-main); margin:0;">Lesson Plan <span
+                  style="font-weight:400; color:var(--text-muted);">Generator</span></h2>
+            </div>
+          </div>
+          <button type="button" id="sidebar-toggle" class="btn btn-ghost" style="padding:4px; margin:-4px;"
+            title="Toggle Sidebar">
+            <i class="ph ph-list" style="font-size:1.4rem;"></i>
+          </button>
+        </div>
+
+        <div style="margin-bottom: 24px;">
+          <h3
+            style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); letter-spacing:0.05em; margin-bottom:4px;">
+            DETAILS</h3>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin:0;">Define the parameters for your lesson.</p>
+        </div>
+
+        <form id="lesson-form" style="display:flex; flex-direction:column; gap:20px;">
+
+          <!-- Subject -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Class
+              Subject</label>
+            <input class="input" type="text" id="class" placeholder="e.g. Algebra I" value="Algebra I"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);" />
+          </div>
+
+          <!-- Grade Level -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Grade
+              Level</label>
+            <select class="select" id="grade"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);">
+              <option value="">Select...</option>
+              <script>
+                document.write([...Array(12)].map((_, i) => `<option value="${i + 1}" ${i + 1 === 9 ? 'selected' : ''}>${i + 1}</option>`).join(''));
+              </script>
+            </select>
+          </div>
+
+          <!-- Unit Title -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Unit
+              Title</label>
+            <input class="input" type="text" id="unit" placeholder="e.g. Linear Equations" value="Linear Equations"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);" />
+          </div>
+
+          <!-- Theme -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Unit
+              Theme</label>
+            <input class="input" type="text" id="theme" placeholder="e.g. Real-world modeling"
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main);" />
+          </div>
+
+          <!-- Objective -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Learning
+              Objective</label>
+            <textarea class="textarea" id="objective" rows="2" placeholder="Students will be able to..."
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main); resize:vertical;">Students will be able to solve linear equations for one variable.</textarea>
+          </div>
+
+          <!-- Target -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Learning
+              Target</label>
+            <textarea class="textarea" id="target" rows="2" placeholder="I can..."
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main); resize:vertical;"></textarea>
+          </div>
+
+          <!-- Criteria -->
+          <div>
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:8px; display:block; color:var(--text-secondary); font-weight:600;">Success
+              Criteria</label>
+            <textarea class="textarea" id="criteria" rows="2" placeholder="I know I am successful when..."
+              style="width:100%; border-radius:8px; background:white; border:1px solid var(--surface-200); font-size:0.85rem; padding:10px 16px; color:var(--text-main); resize:vertical;"></textarea>
+          </div>
+
+          <!-- Features (Checkboxes) -->
+          <div style="margin-top:8px;">
+            <label class="label"
+              style="font-size:0.8rem; margin-bottom:12px; display:block; color:var(--text-secondary); font-weight:600;">Output
+              Options</label>
+            <div
+              style="background:var(--surface-50); border:1px solid var(--surface-200); border-radius:8px; padding:16px; display:flex; flex-direction:column; gap:12px;">
+
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="generateLessonPlan"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" checked /> Full Lesson Plan
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="generateNotes"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Teacher Notes
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="boardReady"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Board-ready Targets
+              </label>
+              <div class="h-px bg-surface-200 my-2"></div>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includePreAssessment"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Pre-Assessment
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includeFormative"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Formative Check
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="includePostAssessment"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> Post-Assessment
+              </label>
+              <label
+                style="display:flex; align-items:center; gap:10px; font-size:0.85rem; color:var(--text-main); cursor:pointer; background:white; padding:10px 12px; border-radius:6px; border:1px solid var(--surface-200);">
+                <input type="checkbox" name="differentiate"
+                  style="accent-color:var(--brand-primary); transform:scale(1.1);" /> ELL Differentiation
+              </label>
+            </div>
+          </div>
+
+          <!-- Generate Button -->
+          <div style="margin-top:24px; padding-top:24px; border-top:1px solid var(--surface-200);">
+            <button type="submit" id="generate-btn" class="btn shadow-lg hover-lift"
+              style="width:100%; padding:14px; border-radius:12px; display:flex; justify-content:center; align-items:center; gap:8px; font-size:0.95rem; background:var(--brand-primary); color:white; border:none; font-weight:bold;">
+              Generate Lesson Plan
+            </button>
+            <div id="loader" class="hidden"
+              style="text-align:center; font-size:0.8rem; color:var(--brand-primary); margin-top:12px; font-weight:600;">
+              <i class="ph ph-spinner-gap animate-spin" style="margin-right:6px;"></i> Generating (~15s)...
+            </div>
+            <div id="time-est"
+              style="text-align:center; font-size:0.7rem; color:var(--text-muted); margin-top:12px; font-weight:500;">
+              Est. generation time: ~15 seconds.
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESIZER -->
+    <div class="resizer" id="dragMe"></div>
+
+    <!-- RIGHT PANEL: Document Preview -->
+    <div class="right-panel"
+      style="flex:1; display:flex; flex-direction:column; background:var(--surface-100); overflow:hidden; position:relative;">
+
+      <!-- Top Bar (Mac-like Toolbar) -->
+      <div class="top-bar"
+        style="height:64px; min-height:64px; background:white; border-bottom:1px solid var(--surface-200); display:flex; align-items:center; justify-content:space-between; padding:0 24px;">
+
+        <!-- Left side: Status badge -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div
+            style="display:flex; align-items:center; gap:6px; background:rgba(16, 185, 129, 0.1); color:var(--accent-success); padding:6px 12px; border-radius:var(--radius-pill); font-size:0.75rem; font-weight:600;">
+            <div style="width:6px; height:6px; background:currentcolor; border-radius:50%;"></div>
+            System Operational
+          </div>
+        </div>
+
+        <!-- Center: Doc Meta (Visible when generated) -->
+        <div id="preview-meta" class="hidden"
+          style="display:flex; align-items:center; gap:16px; flex:1; justify-content:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <i class="ph ph-file-doc" style="color:#A78BFA; font-size:1.2rem;"></i>
+            <span id="doc-title-display"
+              style="font-weight:600; font-size:0.9rem; color:var(--text-main);">Lesson_Plan.docx</span>
+          </div>
+          <div style="width:1px; height:16px; background:var(--surface-200);"></div>
+          <div style="font-size:0.75rem; color:var(--text-muted);">
+            Last edited just now
+          </div>
+        </div>
+
+        <!-- Right side: Actions -->
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button class="btn btn-ghost" style="padding:6px; color:var(--text-secondary);"><i class="ph ph-copy"
+              style="font-size:1.1rem;"></i></button>
+          <button class="btn btn-ghost" style="padding:6px; color:var(--text-secondary);"><i
+              class="ph ph-bookmark-simple" style="font-size:1.1rem;"></i></button>
+          <button id="export-pdf-btn" class="btn"
+            style="background:var(--text-main); color:white; border-radius:var(--radius-pill); font-weight:600; font-size:0.8rem; padding:8px 16px; display:flex; gap:6px; pointer-events:none; opacity:0.5; border:none; cursor:pointer;">
+            <i class="ph ph-printer"></i> Print / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Document Viewing Area -->
+      <div id="doc-scroll-area"
+        style="flex:1; overflow-y:auto; padding:40px; display:flex; justify-content:center; align-items:flex-start;">
+
+        <!-- Empty State -->
+        <div id="preview-empty"
+          style="text-align:center; color:var(--text-muted); align-self:center; margin-top:-10vh;">
+          <div
+            style="width:80px; height:80px; border-radius:50%; background:var(--surface-200); display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <i class="ph ph-file-dashed" style="font-size:2.5rem; color:var(--text-secondary);"></i>
+          </div>
+          <h3 style="color:var(--text-main); font-weight:600; font-size:1.1rem; margin-bottom:8px;">No Lesson Plan
+            Generated</h3>
+          <p style="font-size:0.9rem; max-width:300px; line-height:1.5;">Configure your parameters on the left and click
+            Generate to create a custom lesson plan.</p>
+        </div>
+
+        <!-- The Document Page -->
+        <div id="preview-card" class="hidden hover-lift"
+          style="width:100%; max-width:850px; min-height:1056px; background:white; border-radius:12px; box-shadow:0 10px 40px rgba(0,0,0,0.08); position:relative; overflow:hidden;">
+          <!-- Top Brand Decoration -->
+          <div style="height:6px; width:100%; max-width:100%; background:#10B981; border-radius:12px 12px 0 0;">
+          </div>
+
+          <!-- Content Injection Container -->
+          <div id="doc-content"
+            style="padding:60px 80px; font-family:'Inter', sans-serif; color:var(--text-main); line-height:1.7;">
+          </div>
+        </div>
+
+      </div>
+    </div>
   </main>
 
-  <section class="grading-form">
-    <div class="form-card">
-      <form id="lesson-form">
-        <div class="form-grid">
-          <!-- LEFT: Inputs -->
-          <div class="form-left">
-            <div class="form-section">
-              <label class="form-label" for="class">Class Subject</label>
-              <input type="text" id="class" placeholder="e.g. History, ELA, Science" />
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="grade">Grade Level</label>
-              <select id="grade">
-                <option value="">Select grade...</option>
-                <script>
-                  document.write([...Array(12)].map((_, i) => `<option value="${i + 1}">${i + 1}</option>`).join(''));
-                </script>
-              </select>
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="unit">Unit Title</label>
-              <input type="text" id="unit" />
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="theme">Unit Theme</label>
-              <input type="text" id="theme" />
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="objective">Learning Objective</label>
-              <textarea id="objective" rows="2"></textarea>
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="target">Learning Target</label>
-              <textarea id="target" rows="2"></textarea>
-            </div>
-
-            <div class="form-section">
-              <label class="form-label" for="criteria">Student Success Criteria</label>
-              <textarea id="criteria" rows="2"></textarea>
-            </div>
-          </div>
-
-          <!-- RIGHT: Checkboxes -->
-          <div class="form-right">
-            <div class="form-section">
-              <label class="form-label">Include Elements:</label>
-              <div class="checkbox-group">
-                <label><input type="checkbox" name="generateLessonPlan" /> 1-page Lesson Plan</label>
-                <label><input type="checkbox" name="generateNotes" /> 1-page Notes</label>
-                <label><input type="checkbox" name="boardReady" /> Board-ready Targets</label>
-                <label><input type="checkbox" name="includePreAssessment" /> Pre-Assessment</label>
-                <label><input type="checkbox" name="includeFormative" /> Formative Assessment</label>
-                <label><input type="checkbox" name="includePostAssessment" /> Post-Assessment</label>
-                <label><input type="checkbox" name="includeSelfAssessment" /> Self-Assessment</label>
-                <label><input type="checkbox" name="includeVocabulary" /> Vocabulary</label>
-                <label><input type="checkbox" name="differentiate" /> Differentiate for ELL/Level</label>
-                <label><input type="checkbox" name="multipleLessons" /> Generate Multiple Lessons</label>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer: Submit -->
-        <div class="form-section text-center">
-          <button type="submit" class="btn-purple">Generate Lesson Plan</button>
-          <div id="loader" class="loader" style="margin-top: 12px;"></div>
-          <div id="lesson-output" style="margin-top: 16px;"></div>
-        </div>
-      </form>
-    </div>
-  </section>
-
   <script>
+    // Markdown Parser (Basic with Tables & Pretty Details)
+    function parseMarkdownToHTML(text) {
+      if (!text) return '';
+      let html = text
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^#\s+(.*$)/gm, '<h1 style="font-size:1.8rem; font-weight:800; margin-bottom:16px; color:var(--text-main);">$1</h1>')
+        .replace(/^##\s+(.*$)/gm, '<h2 style="font-size:1.4rem; font-weight:700; margin:32px 0 16px 0; color:var(--text-main); border-bottom:1px solid var(--surface-200); padding-bottom:8px;">$1</h2>')
+
+      // Special Handling for numbered sections (e.g. "### 1 Multiple Choice")
+      html = html.replace(/^###\s+(?:(\d+)[\.\)]?)?\s*(.*$)/gm, (match, num, title) => {
+        if (num) {
+          return `<h3 style="display:flex; align-items:center; gap:12px; font-size:1.2rem; font-weight:700; margin:32px 0 16px 0; color:var(--text-main);">
+                      <div style="width:28px; height:28px; border-radius:50%; background:#ECFDF5; color:#059669; display:flex; align-items:center; justify-content:center; font-size:0.9rem;">${num}</div>
+                      ${title}
+                    </h3>`;
+        }
+        return `<h3 style="font-size:1.2rem; font-weight:700; margin:24px 0 12px 0; color:var(--text-main);">${match.replace('###', '').trim()}</h3>`;
+      });
+
+      html = html.replace(/^- (.*$)/gm, '<li style="margin-bottom:8px;">$1</li>');
+
+      // Special styling for multiple choice options (A. B. C. D.)
+      html = html.replace(/^([A-E])\. (.*$)/gm, '<div style="margin-left:24px; margin-bottom:8px; display:flex; gap:8px;"><span style="font-weight:600; color:var(--text-secondary);">$1.</span> <span>$2</span></div>');
+
+      // Table Regex Magic
+      // Find table blocks (lines starting with |)
+      const tableRegex = /((?:\|.*\|\n)+)/g;
+      html = html.replace(tableRegex, (match) => {
+        let rows = match.trim().split('\n');
+        let tableHtml = '<div style="overflow-x:auto; margin:24px 0;"><table style="width:100%; border-collapse:collapse; font-size:0.9rem; text-align:left;">';
+
+        rows.forEach((row, i) => {
+          // Skip the separator row like |---|---|
+          if (row.match(/^\|[-|: ]+\|$/)) return;
+
+          let cols = row.split('|').slice(1, -1).map(c => c.trim());
+          let tag = i === 0 ? 'th' : 'td';
+          let style = i === 0 ? 'padding:12px 16px; border-bottom:2px solid var(--surface-200); background:var(--surface-50); font-weight:700;' : 'padding:12px 16px; border-bottom:1px solid var(--surface-200);';
+
+          tableHtml += '<tr>' + cols.map(c => `<${tag} style="${style}">${c}</${tag}>`).join('') + '</tr>';
+        });
+
+        tableHtml += '</table></div>';
+        return tableHtml;
+      });
+
+      html = html.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+
+      // Wrap lists generically, being careful not to match tables
+      html = html.replace(/(<li.*<\/li>)/s, '<ul style="padding-left:24px; margin-bottom:16px;">$1</ul>');
+      return html;
+    }
+
     const form = document.getElementById('lesson-form');
-    const loader = document.getElementById('loader');
-    const output = document.getElementById('lesson-output');
-  
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      output.innerHTML = '';
-      loader.style.display = 'block';
-  
-      // Build payload manually for full control
+
       const payload = {
         class: document.getElementById('class')?.value?.trim() || '',
         grade: document.getElementById('grade')?.value || '',
@@ -126,8 +454,7 @@
         objective: document.getElementById('objective')?.value?.trim() || '',
         target: document.getElementById('target')?.value?.trim() || '',
         criteria: document.getElementById('criteria')?.value?.trim() || '',
-  
-        // Checkbox options
+
         generateLessonPlan: form.querySelector('input[name="generateLessonPlan"]')?.checked || false,
         generateNotes: form.querySelector('input[name="generateNotes"]')?.checked || false,
         boardReady: form.querySelector('input[name="boardReady"]')?.checked || false,
@@ -139,80 +466,157 @@
         differentiate: form.querySelector('input[name="differentiate"]')?.checked || false,
         multipleLessons: form.querySelector('input[name="multipleLessons"]')?.checked || false,
       };
-  
-      // 🔍 Log exactly what's being sent
-      console.log("📤 Payload to backend:");
-      console.table(payload);
-  
+
+      if (!payload.class || !payload.grade || !payload.unit) {
+        alert("Please ensure Subject, Grade Level, and Unit Title are all filled out.");
+        return;
+      }
+
+      const generateBtn = document.getElementById('generate-btn');
+      const loader = document.getElementById('loader');
+      const timeEst = document.getElementById('time-est');
+      const previewEmpty = document.getElementById('preview-empty');
+      const previewCard = document.getElementById('preview-card');
+      const previewMeta = document.getElementById('preview-meta');
+      const exportBtn = document.getElementById('export-pdf-btn');
+      const docContent = document.getElementById('doc-content');
+
+      // Update UI for loading
+      generateBtn.style.display = 'none';
+      timeEst.style.display = 'none';
+      loader.classList.remove('hidden');
+
+      previewEmpty.classList.remove('hidden');
+      previewCard.classList.add('hidden');
+      previewMeta.classList.add('hidden');
+      exportBtn.style.pointerEvents = 'none';
+      exportBtn.style.opacity = '0.5';
+      exportBtn.classList.remove('hover-lift');
+
       try {
-        const res = await fetch('https://smartassessbackend-99pu.onrender.com/lessonplan', {
+        const res = await fetch(`${window.API_CONFIG.GRADING_BASE_URL}/lessonplan`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-  
+
         const data = await res.json();
-  
-        // ✅ Log the response
-        console.log("✅ Response from backend:");
-        console.log(data);
-  
-        loader.style.display = 'none';
-  
-        if (data.success && data.pdfUrl) {
-          const link = document.createElement('a');
-          link.href = `https://smartassessbackend-99pu.onrender.com${data.pdfUrl}`;
-          link.textContent = '📄 Download Lesson Plan PDF';
-          link.target = '_blank';
-          link.className = 'btn-light';
-          output.appendChild(link);
+
+        // Reset UI
+        loader.classList.add('hidden');
+        generateBtn.style.display = 'flex';
+        timeEst.style.display = 'block';
+
+        if (data.success && data.result) {
+          // Show Document
+          previewEmpty.classList.add('hidden');
+          previewCard.classList.remove('hidden');
+          previewMeta.classList.remove('hidden');
+
+          document.getElementById('doc-title-display').innerText = `${payload.class}_${payload.grade}th_Lesson.docx`.replace(/\s+/g, '');
+
+          const customHeader = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 40px; padding-bottom: 32px; border-bottom: 2px solid var(--surface-100);">
+              <div>
+                 <h1 style="font-size:2.4rem; font-weight:800; color:#111827; margin:0 0 16px 0; line-height:1.1; letter-spacing:-0.02em;">
+                   Lesson Plan: ${payload.unit}
+                 </h1>
+                 <div style="display:flex; gap:16px; font-size:0.95rem; color:#6B7280; font-weight:500;">
+                   <span>Subject: ${payload.class}</span> &bull; <span>Grade: ${payload.grade}th</span> &bull; <span>Duration: 60 mins</span>
+                 </div>
+              </div>
+              <div style="background:#F8FAFC; padding:12px 24px; border-radius:16px; text-align:center; min-width:120px;">
+                 <div style="font-size:0.75rem; font-weight:700; color:#94A3B8; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:4px;">Complexity</div>
+                 <div style="font-size:1.8rem; font-weight:800; color:#059669;">Tier 1</div>
+              </div>
+            </div>
+          `;
+
+          docContent.innerHTML = customHeader + parseMarkdownToHTML(data.result);
+
+          exportBtn.style.pointerEvents = 'auto';
+          exportBtn.style.opacity = '1';
+          exportBtn.classList.add('hover-lift');
         } else {
-          output.textContent = '❌ Generation failed. Please try again.';
+          alert('Error generating lesson plan: ' + (data.message || 'Unknown error'));
         }
       } catch (err) {
-        console.error('❌ Request error:', err);
-        loader.style.display = 'none';
-        output.textContent = '❌ Error connecting to backend.';
+        loader.classList.add('hidden');
+        generateBtn.style.display = 'flex';
+        timeEst.style.display = 'block';
+        alert('Connection Error while generating lesson plan.');
+        console.error(err);
+      }
+    });
+
+    // Native Browser Print Logic
+    document.getElementById('export-pdf-btn').addEventListener('click', function (e) {
+      e.preventDefault();
+      window.print();
+    });
+
+    // Sidebar Toggle
+    document.getElementById('sidebar-toggle').addEventListener('click', function () {
+      document.querySelector('.app-sidebar').classList.toggle('collapsed');
+    });
+
+    // Panel Resizer Logic
+    const leftPanel = document.querySelector('.left-panel');
+    const resizer = document.getElementById('dragMe');
+
+    if (leftPanel && resizer) {
+      let x = 0;
+      let w = 0;
+
+      const mouseDownHandler = function (e) {
+        x = e.clientX;
+        const styles = window.getComputedStyle(leftPanel);
+        w = parseInt(styles.width, 10);
+
+        document.addEventListener('mousemove', mouseMoveHandler);
+        document.addEventListener('mouseup', mouseUpHandler);
+        resizer.classList.add('resizing');
+        document.body.style.cursor = 'col-resize';
+        leftPanel.style.userSelect = 'none';
+        leftPanel.style.pointerEvents = 'none';
+        document.querySelector('.right-panel').style.pointerEvents = 'none'; // Prevent text selection in preview
+      };
+
+      const mouseMoveHandler = function (e) {
+        const dx = e.clientX - x;
+        let newWidth = w + dx;
+        if (newWidth < 300) newWidth = 300;
+        if (newWidth > window.innerWidth - 300) newWidth = window.innerWidth - 300;
+        leftPanel.style.width = `${newWidth}px`;
+      };
+
+      const mouseUpHandler = function () {
+        resizer.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', mouseMoveHandler);
+        document.removeEventListener('mouseup', mouseUpHandler);
+        leftPanel.style.userSelect = '';
+        leftPanel.style.pointerEvents = '';
+        document.querySelector('.right-panel').style.pointerEvents = '';
+      };
+
+      resizer.addEventListener('mousedown', mouseDownHandler);
+    }
+  </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const userJson = localStorage.getItem('smartassessUser');
+      if (userJson) {
+        try {
+          const user = JSON.parse(userJson);
+          const nameEl = document.getElementById('sidebar-user-name');
+          if (nameEl && user.name) nameEl.textContent = user.name;
+        } catch (err) {
+          console.error("Failed to parse user session", err);
+        }
       }
     });
   </script>
-  <script>
-    (function propagateHash() {
-      const currentHash = window.location.hash;           // e.g. "#name=Huda&email=..."
-      if (!currentHash) return;
-  
-      // 1) Rewrite all same-origin links to carry the current hash
-      document.querySelectorAll('a[href]').forEach(a => {
-        const href = a.getAttribute('href');
-        if (!href) return;
-        // Skip absolute external links, mailto, tel, and pure hash anchors
-        if (/^(https?:|mailto:|tel:)/i.test(href) || href.startsWith('#')) return;
-  
-        // If link already has a hash, append as &…; else add the current hash
-        const newHref = href.includes('#')
-          ? href + '&' + currentHash.slice(1)
-          : href + currentHash;
-        a.setAttribute('href', newHref);
-      });
-  
-      // 2) Patch inline button navigations like: onclick="window.location.href='page.html'"
-      document.querySelectorAll('[onclick*="window.location.href"]').forEach(el => {
-        const m = el.getAttribute('onclick').match(/window\.location\.href\s*=\s*'([^']+)'/);
-        if (!m) return;
-        const url = m[1];
-        const newUrl = url.includes('#')
-          ? url + '&' + currentHash.slice(1)
-          : url + currentHash;
-        el.setAttribute('onclick', `window.location.href='${newUrl}'`);
-      });
-  
-      // 3) Optional helper for future use: <button onclick="navWithHash('lessonplan.html')">
-      window.navWithHash = function (url) {
-        const h = window.location.hash;
-        window.location.href = url + (url.includes('#') ? '&' + h.slice(1) : h);
-      };
-    })();
-  </script>
-  
-    </body>
+</body>
+
 </html>
